@@ -19,10 +19,14 @@ def ext_modules(config, _dir):
             for name in match:
                 f90_file = os.path.join(root, name)
                 ext_name = os.path.splitext(f90_file)[0].replace("/", ".")
-                config.add_extension(ext_name,
-                                     [f90_file],
-                                     f2py_options=['--quiet']
-                                    )
+                config.add_extension(
+                    ext_name,
+                    [f90_file],
+                    f2py_options=[
+                        "--f90exec=/home/center/opt/x86_64/cores/intel/compilers_and_libraries_2019.5.281/linux/bin/intel64/ifort",
+                        "--f90flags=-axCORE-AVX512"
+                    ]
+                )
 
 with open('README.rst', 'r') as summary:
     LONG_DESCRIPTION = summary.read()
