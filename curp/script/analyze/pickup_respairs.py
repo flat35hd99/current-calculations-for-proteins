@@ -14,13 +14,10 @@ def pickup_respairs(trj_fns, input_trj_fmt, prmtop_fn, prmtop_fmt, interval=1,
          is_both=False, **kwds):
     """Pick up the residue pair table to given file as a ndx format."""
 
-    # Get parameters
     cutoff = float(cutoff)
     cutoff2 = cutoff*cutoff
 
-    # Get topology
     tpl = get_tpl(prmtop_fmt, prmtop_fn)
-    natom = tpl.get_natom()
 
     # Generate residue group
     res_info  = tpl.get_residue_info()
@@ -30,7 +27,6 @@ def pickup_respairs(trj_fns, input_trj_fmt, prmtop_fn, prmtop_fmt, interval=1,
                 res_info, atom_info, name_fmt=format))
 
     resnames = [ resname for resname, iatoms in rname_iatoms_pairs ]
-    nres = len(resnames)
 
     # Get trajectory
     crd_parser = gen_trj(tpl, trj_fns, input_trj_fmt,
@@ -51,8 +47,8 @@ def pickup_respairs(trj_fns, input_trj_fmt, prmtop_fn, prmtop_fmt, interval=1,
         pickup.cutoff_method = 3
     else:
         pass
-
-    respair_table_traj = (gen_respair_table_fortran(crd, nres, resnames)
+    
+    respair_table_traj = (gen_respair_table_fortran(crd, resnames)
             for crd in crds )
 
     respair_iter = gen_respair_table_over_traj(
@@ -136,6 +132,7 @@ def pickup_respairs(trj_fns, input_trj_fmt, prmtop_fn, prmtop_fmt, interval=1,
 
     else:
         for rname_i, rnames_j in respair_iter:
+            print(f"debug: {rname_i}")
 
             if rnames_j:
                 npair += len(rnames_j)
@@ -157,18 +154,18 @@ def zip_double(data_iter):
             if j <= i: continue
             yield e1, e2
 
-def gen_respair_table_fortran(crd, nres, resnames):
+def gen_respair_table_fortran(crd, res_name_list):
+    n_res = len(res_name_list)
+    cands = pickup.get_candidate_pairs(crd, n_res)
 
-    cands = pickup.get_candidate_pairs(crd, nres)
+    for ires_1 in range(n_res-1):
+        j_res_list = []
+        for jres_1 in range(ires_1+1, n_res):
+            if cands[ires_1, jres_1]: j_res_list.append( res_name_list[jres_1] )
 
-    for ires_1 in range(nres-1):
-        jreslist = []
-        for jres_1 in range(ires_1+1, nres):
-            if cands[ires_1, jres_1]: jreslist.append( resnames[jres_1] )
+        yield res_name_list[ires_1], j_res_list
 
-        yield resnames[ires_1], jreslist
-
-def gen_respair_table(crd, resnames, rname_iatoms_pairs, cutoff_method,cutoff2):
+def gen_respair_table(crd, resnames, rname_iatoms_pairs, cutoff_method, cutoff2):
 
     res_crds = [ crd[iatoms] for rname, iatoms in rname_iatoms_pairs ]
 
