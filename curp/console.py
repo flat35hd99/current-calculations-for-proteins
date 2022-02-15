@@ -107,6 +107,11 @@ def arg_compute(parser=None):
                         action='store_true',
                         help='Print out informations.')
 
+    parser.add_argument('--print-only-error',
+                        dest='print_only_error', default=False,
+                        action='store_true',
+                        help='Print out only error.')
+
     parser.add_argument('-s', '--enable-serial',
                         dest='use_serial', default=False,
                         action='store_true',

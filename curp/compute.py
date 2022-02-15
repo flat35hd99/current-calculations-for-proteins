@@ -455,7 +455,7 @@ def get_data_iter(setting, topology, target_atoms):
     return data_iter
 
 
-def curp(input_="run.cfg", use_serial=False, vervose=False,
+def curp(input_="run.cfg", use_serial=False, vervose=False, print_only_error=False,
          output_conf_def=False, output_conf_fmtd=False, **kwds):
     """Compute stress tensor or inter-residue energy or heat flow.
 
@@ -522,6 +522,8 @@ def curp(input_="run.cfg", use_serial=False, vervose=False,
     # Configuration of clog module.
     if vervose:
         logger.log_level = logger.DEBUG
+    elif print_only_error :
+        logger.log_level = logger.WARN
     else:
         logger.log_level = logger.INFO
 
