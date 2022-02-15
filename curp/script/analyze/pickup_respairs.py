@@ -132,7 +132,6 @@ def pickup_respairs(trj_fns, input_trj_fmt, prmtop_fn, prmtop_fmt, interval=1,
 
     else:
         for rname_i, rnames_j in respair_iter:
-            print(f"debug: {rname_i}")
 
             if rnames_j:
                 npair += len(rnames_j)
