@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 
+
 def parse_helix(filename):
     """
     %TM1  1 25
@@ -13,14 +14,12 @@ def parse_helix(filename):
     .
     """
 
-    file = open(filename, 'rb')
-    lines = (line for line in file
-            if line.startswith("%H")
-            or line.startswith("%TM") )
+    file = open(filename, "rb")
+    lines = (line for line in file if line.startswith("%H") or line.startswith("%TM"))
 
     for line in lines:
         cols = line.split()
-        name, ibeg, iend = cols[0].replace('%',''), cols[1], cols[2]
+        name, ibeg, iend = cols[0].replace("%", ""), cols[1], cols[2]
         yield int(ibeg), int(iend)
 
     file.close()
@@ -30,21 +29,21 @@ def main(ec_fn, helix_fn, arg_3, **kwds):
     if ec_fn is None:
         ec_file = sys.stdin
     else:
-        ec_file = open(ec_fn, 'r')
+        ec_file = open(ec_fn, "r")
     for line in ec_file:
-        if line.startswith('#'):
+        if line.startswith("#"):
             print(line.strip())
             continue
 
         cols = line.split()
         don_line, acc_line, rest = cols[0], cols[1], cols[2:]
-        rid1 = int(don_line.split('_')[0])
-        rid2 = int(acc_line.split('_')[0])
+        rid1 = int(don_line.split("_")[0])
+        rid2 = int(acc_line.split("_")[0])
 
         if arg_3 == 1:
-            if rid1+4 >= rid2:
+            if rid1 + 4 >= rid2:
                 for ibeg, iend in ibeg_iend_pairs:
-                    if ibeg<=rid1<=iend and ibeg<=rid2<=iend:
+                    if ibeg <= rid1 <= iend and ibeg <= rid2 <= iend:
                         # print(rid1, rid2, ibeg, iend)
                         break
                 else:
@@ -52,9 +51,9 @@ def main(ec_fn, helix_fn, arg_3, **kwds):
             else:
                 print(line.strip())
 
-        elif rid1+4 == rid2:
+        elif rid1 + 4 == rid2:
             for ibeg, iend in ibeg_iend_pairs:
-                if ibeg<=rid1<=iend and ibeg<=rid2<=iend:
+                if ibeg <= rid1 <= iend and ibeg <= rid2 <= iend:
                     # print('this', rid1, rid2, ibeg, iend)
                     break
             else:
@@ -66,7 +65,8 @@ def main(ec_fn, helix_fn, arg_3, **kwds):
     ec_file.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from curp.tool.sele.console import exec_command, arg_sel_nohelix
+
     parser = arg_sel_nohelix()
     exec_command(parser)

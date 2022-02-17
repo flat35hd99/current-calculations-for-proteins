@@ -6,14 +6,13 @@ import numpy
 import time
 
 # curp module
-topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if topdir not in sys.path:
     sys.path.insert(0, topdir)
 import clog as logger
 
 ################################################################################
 class TwoBodyForceBase:
-
     def __init__(self, topology, setting=None):
         self.__tpl = topology
         self.__setting = setting
@@ -24,9 +23,17 @@ class TwoBodyForceBase:
         self.__ptype_to_displacement = {}
 
     def get_pottypes(self):
-        return ['bond','angle','torsion','improper',
-                'coulomb14','vdw14','coulomb','vdw']
-    
+        return [
+            "bond",
+            "angle",
+            "torsion",
+            "improper",
+            "coulomb14",
+            "vdw14",
+            "coulomb",
+            "vdw",
+        ]
+
     def set_module(self, module):
         self.__mod = module
 
@@ -56,7 +63,7 @@ class TwoBodyForceBase:
         self.initialize(crd)
 
         # calculate the bonded components.
-        for ptype in ('bond','angle','torsion','improper','coulomb14','vdw14'):
+        for ptype in ("bond", "angle", "torsion", "improper", "coulomb14", "vdw14"):
             self.cal_bonded(ptype)
 
         # calculate the nonbonded components.
@@ -67,43 +74,46 @@ class TwoBodyForceBase:
         return self.__forces
 
     def _setup_init(self, max_tbf, check=False):
-        self.__mod.setup(natom=self.get_natom(), check=check,
-                bonded_pairs = self.__tpl.get_bonded_pairs(), max_tbf=max_tbf)
+        self.__mod.setup(
+            natom=self.get_natom(),
+            check=check,
+            bonded_pairs=self.__tpl.get_bonded_pairs(),
+            max_tbf=max_tbf,
+        )
 
     def _setup_bond(self):
         """Prepare the parameter for the bond calculation."""
-        mod = self.__setup_bondtype('bond')
+        mod = self.__setup_bondtype("bond")
         mod.ibnd_to_itbf = self.__tpl.get_ibnd_to_ipair()
 
     def _setup_angle(self):
         """Prepare the parameter for the angle calculation."""
-        mod = self.__setup_bondtype('angle')
+        mod = self.__setup_bondtype("angle")
         mod.iang_to_itbf = self.__tpl.get_iang_to_ipair()
 
     def _setup_torsion(self):
         """Prepare the parameter for the torsion calculation."""
-        mod = self.__setup_bondtype('torsion')
+        mod = self.__setup_bondtype("torsion")
         mod.itor_to_itbf = self.__tpl.get_itor_to_ipair()
 
     def _setup_improper(self):
         """Prepare the parameter for the improper torsion calculation."""
-        mod = self.__setup_bondtype('improper')
+        mod = self.__setup_bondtype("improper")
         mod.itor_to_itbf = self.__tpl.get_iimp_to_ipair()
 
     def __setup_bondtype(self, btype_name):
-        """Prepare the parameter for the calculations without coulomb and vdw.
-        """
-        info = getattr(self.__tpl, 'get_'+btype_name+'_info')()
+        """Prepare the parameter for the calculations without coulomb and vdw."""
+        info = getattr(self.__tpl, "get_" + btype_name + "_info")()
         mod_type = getattr(self.__mod, btype_name)
         for key in info.keys():
             value = info[key]
             setattr(mod_type, key, value)
 
-        if btype_name == 'torsion':
-            logger.info('The number of torsions :', len(mod_type.four_atoms))
+        if btype_name == "torsion":
+            logger.info("The number of torsions :", len(mod_type.four_atoms))
 
-        if btype_name == 'improper':
-            logger.info('The number of impropers :', len(mod_type.four_atoms))
+        if btype_name == "improper":
+            logger.info("The number of impropers :", len(mod_type.four_atoms))
 
         return mod_type
 
@@ -111,30 +121,30 @@ class TwoBodyForceBase:
         """Prepare the parameter for the coulomb calculation."""
         coulomb = self.__mod.coulomb
         info = self.__tpl.get_coulomb_info()
-        coulomb.charges = info['charges']
+        coulomb.charges = info["charges"]
         coulomb.cutoff_length = self.__setting.curp.coulomb_cutoff_length
 
     def _setup_vdw(self):
         """Prepare the parameter for the vdw calculation."""
         vdw = self.__mod.vdw
         info = self.__tpl.get_vdw_info()
-        vdw.atom_types = info['atom_types']
-        vdw.c6s        = info['c6s']
-        vdw.c12s       = info['c12s']
+        vdw.atom_types = info["atom_types"]
+        vdw.c6s = info["c6s"]
+        vdw.c12s = info["c12s"]
         vdw.cutoff_length = self.__setting.curp.vdw_cutoff_length
 
     def _setup_coulomb14(self):
         """Prepare the parameter for the coulomb calculation."""
         coulomb14 = self.__mod.coulomb14
         info = self.__tpl.get_coulomb_info()
-        coulomb14.charges = info['charges']
+        coulomb14.charges = info["charges"]
         # return self.__tpl.get_i14_to_ipair()
         i14_to_itbf = self.__tpl.get_i14_to_ipair()
 
         # if len(self.__tpl.get_i14_to_ipair())==1:
-            # i14_to_itbf = numpy.array([])
+        # i14_to_itbf = numpy.array([])
         # else:
-            # i14_to_itbf = self.__tpl.get_i14_to_ipair()
+        # i14_to_itbf = self.__tpl.get_i14_to_ipair()
 
         # coulomb14.setup(info['charges'], i14_to_itbf)
         coulomb14.i14_to_itbf = self.__tpl.get_i14_to_ipair()
@@ -143,12 +153,12 @@ class TwoBodyForceBase:
         """Prepare the parameter for the vdw calculation."""
         vdw14 = self.__mod.vdw14
         info = self.__tpl.get_vdw_info()
-        vdw14.atom_types = info['atom_types']
-        vdw14.c6s        = info['c6s']
-        vdw14.c12s       = info['c12s']
+        vdw14.atom_types = info["atom_types"]
+        vdw14.c6s = info["c6s"]
+        vdw14.c12s = info["c12s"]
 
         # if len(self.__tpl.get_i14_to_ipair())==1:
-            # i14_to_itbf = numpy.array([])
+        # i14_to_itbf = numpy.array([])
         # else:
         i14_to_itbf = self.__tpl.get_i14_to_ipair()
 
@@ -157,11 +167,11 @@ class TwoBodyForceBase:
         vdw14.i14_to_itbf = self.__tpl.get_i14_to_ipair()
         # print(vdw14.i14_to_itbf )
 
-        logger.info( 'The number of 1-4 interactions', len(i14_to_itbf))
+        logger.info("The number of 1-4 interactions", len(i14_to_itbf))
 
     def initialize(self, crd):
         self.__mod.initialize(crd)
-        self.__forces   = numpy.zeros( [self.__natom, 3] )
+        self.__forces = numpy.zeros([self.__natom, 3])
         self.__ptype_to_energy = {}
         self.__ptype_to_forces = {}
 
@@ -178,34 +188,36 @@ class TwoBodyForceBase:
         self.__ptype_to_forces[bond_type] = mod.forces
         self.__ptype_to_displacement[bond_type] = mod.displacement
 
-        #DEBUG
+        # DEBUG
         # print('** {} forces **'.format(bond_type))
         # for iatm_1, f in enumerate(mod.forces):
-            # print("{:5>} {:15.7f}{:15.7f}{:15.7f}".format(
-                # iatm_1+1, f[0],f[1],f[2]))
+        # print("{:5>} {:15.7f}{:15.7f}{:15.7f}".format(
+        # iatm_1+1, f[0],f[1],f[2]))
         # print()
 
         # if bond_type == 'bond':
-            # print('** {} pairwise forces **'.format(bond_type))
-            # for ibnd_1, itbf in enumerate(mod.ibnd_to_itbf):
-                # tbf = mod.tbforces[itbf-1]
-                # iatm, jatm = mod.two_atoms[ibnd_1]
-                # print("{:5>} {:5>} {:5>} {:15.7f}{:15.7f}{:15.7f}".format(
-                    # ibnd_1+1, iatm,jatm, tbf[0],tbf[1],tbf[2]))
-            # print()
+        # print('** {} pairwise forces **'.format(bond_type))
+        # for ibnd_1, itbf in enumerate(mod.ibnd_to_itbf):
+        # tbf = mod.tbforces[itbf-1]
+        # iatm, jatm = mod.two_atoms[ibnd_1]
+        # print("{:5>} {:5>} {:5>} {:15.7f}{:15.7f}{:15.7f}".format(
+        # ibnd_1+1, iatm,jatm, tbf[0],tbf[1],tbf[2]))
+        # print()
 
-        #DEBUG
+        # DEBUG
 
-        return dict(energy = mod.energy,
-                    forces = mod.forces,
-                    tbforces = mod.tbforces,
-                    displacement = mod.displacement)
+        return dict(
+            energy=mod.energy,
+            forces=mod.forces,
+            tbforces=mod.tbforces,
+            displacement=mod.displacement,
+        )
 
     def cal_coulomb(self, table):
-        return self._cal_nonbond(table, 'coulomb')
+        return self._cal_nonbond(table, "coulomb")
 
     def cal_vdw(self, table):
-        return self._cal_nonbond(table, 'vdw')
+        return self._cal_nonbond(table, "vdw")
 
     def _cal_nonbond(self, table, pottype):
         """Calculate the pairwise forces using the bonded type modules.
@@ -235,10 +247,12 @@ class TwoBodyForceBase:
         # get pairwise forces
         tbforces = mod.tbforces.copy()
 
-        return dict(energy = mod.energy,
-                    forces = mod.forces,
-                    tbforces = tbforces,
-                    displacement = displacement)
+        return dict(
+            energy=mod.energy,
+            forces=mod.forces,
+            tbforces=tbforces,
+            displacement=displacement,
+        )
 
     def get_forces(self, pottype):
         """Return the calculated force with givin potential type."""
@@ -250,42 +264,46 @@ class TwoBodyForceBase:
 
     def output_energy(self):
         """Output the energy."""
-        logger.info_cycle('    ** Output energy **')
+        logger.info_cycle("    ** Output energy **")
         for pottype in self.get_pottypes():
             energy = self.get_energy(pottype)
-            logger.info_cycle('    {:>10} : {:>}'.format(pottype, energy))
+            logger.info_cycle("    {:>10} : {:>}".format(pottype, energy))
         logger.info_cycle()
 
     def output_force(self):
-        logger.debug_cycle('    ** Output force **')
+        logger.debug_cycle("    ** Output force **")
         for pottype in self.get_pottypes():
-            logger.debug_cycle('    [ {} force ] '.format(pottype))
+            logger.debug_cycle("    [ {} force ] ".format(pottype))
 
             force = self.get_forces(pottype)
             for iatm_1, f in enumerate(force):
                 logger.debug_cycle(
-                    '    {:>8} : {:>12.8f} {:>12.8f} {:>12.8f}'.format(
-                    iatm_1+1, f[0], f[1], f[2]))
+                    "    {:>8} : {:>12.8f} {:>12.8f} {:>12.8f}".format(
+                        iatm_1 + 1, f[0], f[1], f[2]
+                    )
+                )
 
-        logger.debug_cycle('    [ Total force ] '.format(pottype))
+        logger.debug_cycle("    [ Total force ] ".format(pottype))
         for iatm_1, f in enumerate(self.__forces):
             logger.debug_cycle(
-                '    {:>8} : {:>12.8f} {:>12.8f} {:>12.8f}'.format(
-                iatm_1+1, f[0], f[1], f[2]))
+                "    {:>8} : {:>12.8f} {:>12.8f} {:>12.8f}".format(
+                    iatm_1 + 1, f[0], f[1], f[2]
+                )
+            )
 
         logger.debug_cycle()
 
     def output_bonded(self, results, pot_type):
         print("[{}]".format(pot_type))
         print("== Energy = ")
-        print(results['energy'])
+        print(results["energy"])
         print()
 
         print("== Forces ==")
-        print(results['forces'])
+        print(results["forces"])
         print()
 
-        print('== Two-body forces ==')
+        print("== Two-body forces ==")
         caltype_mod = getattr(self.get_module(), pot_type)
         caltype_mod.print_tbforce()
         print()
@@ -305,20 +323,20 @@ class TwoBodyForceBase:
     def output_nonbonded(self, results, pot_type, table):
         print("[{}]".format(pot_type))
         print("== Energy == ")
-        print(results['energy'])
+        print(results["energy"])
         print()
 
         print("== Forces ==")
-        print(results['forces'])
+        print(results["forces"])
         print()
 
-        print('== Two-body forces ==')
-        tbfs = results['tbforces']
+        print("== Two-body forces ==")
+        tbfs = results["tbforces"]
         itbf = 0
         for iatm, jatm_beg, jatm_end in table:
-            for jatm in range(jatm_beg, jatm_end+1):
+            for jatm in range(jatm_beg, jatm_end + 1):
                 itbf += 1
-                print(iatm, jatm, tbfs[itbf-1])
+                print(iatm, jatm, tbfs[itbf - 1])
 
         print()
 
@@ -333,15 +351,16 @@ class TwoBodyForceBase:
 
         return maxpair
 
-class TwoBodyForce(TwoBodyForceBase):
 
+class TwoBodyForce(TwoBodyForceBase):
     def __init__(self, topology, setting=None):
         TwoBodyForceBase.__init__(self, topology, setting)
         import lib_amberbase
+
         self.set_module(lib_amberbase)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy
 
     class Setting:
@@ -351,71 +370,77 @@ if __name__ == '__main__':
 
         curp = Curp()
 
-
     import os, sys
-    topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+    topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if topdir not in sys.path:
         sys.path.insert(0, topdir)
 
     from forcefield.amberbase import ConverterBase
 
     class DummyTopology(ConverterBase):
-
         def __init__(self):
             ConverterBase.__init__(self, None)
 
-        def get_mol_info(self): pass
-        def convert(self): pass
-        def get_residue_info(self): pass
-        def get_pbc_info(self): pass
+        def get_mol_info(self):
+            pass
+
+        def convert(self):
+            pass
+
+        def get_residue_info(self):
+            pass
+
+        def get_pbc_info(self):
+            pass
 
         def get_natom(self):
             return 5
 
         def get_bond_info(self):
             return dict(
-                two_atoms    = [[1,2], [1,3], [4,5]],
-                force_consts = [1.0, 1.5, 1.9],
-                length_eqs   = [1.0, 1.2, 0.9] )
+                two_atoms=[[1, 2], [1, 3], [4, 5]],
+                force_consts=[1.0, 1.5, 1.9],
+                length_eqs=[1.0, 1.2, 0.9],
+            )
 
         def get_angle_info(self):
             return dict(
-                three_atoms  = [[1,2,3], [2,3,4], [1,2,5]],
-                force_consts = [1.5, 2.0, 3.0],
-                theta_eqs    = [90.0, 105.0, 120.0] )
+                three_atoms=[[1, 2, 3], [2, 3, 4], [1, 2, 5]],
+                force_consts=[1.5, 2.0, 3.0],
+                theta_eqs=[90.0, 105.0, 120.0],
+            )
 
         def get_torsion_info(self):
             return dict(
-                four_atoms     = [[1,2,3,4], [2,1,4,5]],
-                num_torsions   = [1, 1],
-                num_freqs      = [2, 5],
-                force_consts   = [1.5, 1.0],
-                initial_phases = [180.0, 0.0] )
+                four_atoms=[[1, 2, 3, 4], [2, 1, 4, 5]],
+                num_torsions=[1, 1],
+                num_freqs=[2, 5],
+                force_consts=[1.5, 1.0],
+                initial_phases=[180.0, 0.0],
+            )
 
         def get_improper_info(self):
             return dict(
-                four_atoms     = [[1,2,3,4], [2,1,4,5]],
-                num_torsions   = [1, 1],
-                num_freqs      = [2, 5],
-                force_consts   = [1.5, 1.0],
-                initial_phases = [180.0, 0.0] )
+                four_atoms=[[1, 2, 3, 4], [2, 1, 4, 5]],
+                num_torsions=[1, 1],
+                num_freqs=[2, 5],
+                force_consts=[1.5, 1.0],
+                initial_phases=[180.0, 0.0],
+            )
 
         def get_coulomb_info(self):
-            return dict(
-                charges = [0.5, 0.1, 0.3, 0.01, -0.6] )
+            return dict(charges=[0.5, 0.1, 0.3, 0.01, -0.6])
 
         def get_vdw_info(self):
             return dict(
-                atom_types = [1, 2, 1, 3, 1],
-                c6s = [[100.0, 50.0, 35.5],
-                       [50.0, 200.0, 10.0],
-                       [35.0, 10.0, 300.0]],
-                c12s = [[300.0, 91.0, 25.0],
-                       [91.0, 200.0, 15.0],
-                       [25.0, 15.0, 100.0]] )
+                atom_types=[1, 2, 1, 3, 1],
+                c6s=[[100.0, 50.0, 35.5], [50.0, 200.0, 10.0], [35.0, 10.0, 300.0]],
+                c12s=[[300.0, 91.0, 25.0], [91.0, 200.0, 15.0], [25.0, 15.0, 100.0]],
+            )
 
         def get_bonded14_pairs(self):
-            return [[1,4],[2,5]]
+            return [[1, 4], [2, 5]]
 
     # setup
     tbcal = TwoBodyForce(DummyTopology(), Setting())
@@ -423,23 +448,26 @@ if __name__ == '__main__':
 
     # # initialize with coordinate
     crd = numpy.array(
-        [[1.0, 2.0, 3.0],
-         [2.0, 1.0, 1.5],
-         [3.0, 3.0, 3.0],
-         [0.0, 0.0, 0.0],
-         [5.5, 5.1, 4.5]])
+        [
+            [1.0, 2.0, 3.0],
+            [2.0, 1.0, 1.5],
+            [3.0, 3.0, 3.0],
+            [0.0, 0.0, 0.0],
+            [5.5, 5.1, 4.5],
+        ]
+    )
     tbcal.initialize(crd)
 
     # # calculate two-body forces and output its data
-    l = ['bond', 'angle', 'torsion', 'improper', 'coulomb14', 'vdw14']
+    l = ["bond", "angle", "torsion", "improper", "coulomb14", "vdw14"]
     # l = ['coulomb14', 'vdw14']
     for caltype in l:
         res = tbcal.cal_bonded(caltype)
         tbcal.output_bonded(res, caltype)
 
-    table = [[1, 2, 5], [2, 3, 5], [3,4,5], [4, 5, 5] ]
-    for caltype in ['coulomb', 'vdw']:
-        res = getattr(tbcal, 'cal_'+caltype)(table)
+    table = [[1, 2, 5], [2, 3, 5], [3, 4, 5], [4, 5, 5]]
+    for caltype in ["coulomb", "vdw"]:
+        res = getattr(tbcal, "cal_" + caltype)(table)
         tbcal.output_nonbonded(res, caltype, table)
 
     # crd = numpy.array(
@@ -478,4 +506,3 @@ if __name__ == '__main__':
     #     with bm('vdw'):
     #         results = tbcal.cal_vdw(table)
     #         output(results)
-

@@ -5,13 +5,14 @@ import time
 import numpy
 
 # curp modules
-topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if topdir not in sys.path:
     sys.path.insert(0, topdir)
 import utility
 import clog as logger
 
 import base
+
 ################################################################################
 class EnergyFluxCalculator(base.FluxCalculator):
 
@@ -27,21 +28,25 @@ class EnergyFluxCalculator(base.FluxCalculator):
         base.FluxCalculator.prepare(self, *args, **kwds)
 
         ftype = self.get_setting().curp.flux_grain
-        if ftype == 'atom':
-            flag_atom  = True
+        if ftype == "atom":
+            flag_atom = True
             flag_group = False
-        elif ftype == 'group':
-            flag_atom  = False
+        elif ftype == "group":
+            flag_atom = False
             flag_group = True
-        elif ftype == 'both':
-            flag_atom  = True
+        elif ftype == "both":
+            flag_atom = True
             flag_group = True
         else:
             pass
 
-        self.fcal = EnergyFlux( self.get_target_atoms(),
-                self.get_iatm_to_igrp(), self.get_bonded_pairs(),
-                flag_atom, flag_group)
+        self.fcal = EnergyFlux(
+            self.get_target_atoms(),
+            self.get_iatm_to_igrp(),
+            self.get_bonded_pairs(),
+            flag_atom,
+            flag_group,
+        )
 
     def cal_bonded(self, crd, vel, bond_type):
         """Calculate the energy flux for the bonded term."""
@@ -51,8 +56,7 @@ class EnergyFluxCalculator(base.FluxCalculator):
         # calculate two-body force of bonded interactions
         t0 = time.time()
         tbfs_info = tbcal.cal_bonded(bond_type)
-        tbfs      = tbfs_info['tbforces']
-
+        tbfs = tbfs_info["tbforces"]
 
         # calculate current
         t1 = time.time()
@@ -60,63 +64,65 @@ class EnergyFluxCalculator(base.FluxCalculator):
 
         # log the elasped times
         t2 = time.time()
-        self.store_time(bond_type+' pairwise', t1-t0)
-        self.store_time(bond_type+' flux' , t2-t1)
+        self.store_time(bond_type + " pairwise", t1 - t0)
+        self.store_time(bond_type + " flux", t2 - t1)
 
         return flux_atm, flux_grp
 
     def cal_coulomb(self, crd, vel):
         """Calculate the energy flux for the coulomb term."""
 
-        table     = self.get_interact_table()
+        table = self.get_interact_table()
         type_func = self.get_tbforce().cal_coulomb
-        cutoff    = self.get_setting().curp.coulomb_cutoff_length
+        cutoff = self.get_setting().curp.coulomb_cutoff_length
 
         t0 = time.time()
-        gen_tbfs = ( type_func(t)['tbforces'] for t in table )
-        flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table )
+        gen_tbfs = (type_func(t)["tbforces"] for t in table)
+        flux_atm, flux_grp = self.fcal.cal_nonbonded(vel, gen_tbfs, table)
 
         t1 = time.time()
         dt_flux = self.fcal.dt
 
-        self.store_time('coulomb pairwise' , t1 - t0 - dt_flux)
-        self.store_time('coulomb flux' , dt_flux)
+        self.store_time("coulomb pairwise", t1 - t0 - dt_flux)
+        self.store_time("coulomb flux", dt_flux)
 
         return flux_atm, flux_grp
 
     def cal_vdw(self, crd, vel):
         """Calculate the energy flux for the vdW term."""
 
-        table     = self.get_interact_table()
+        table = self.get_interact_table()
         type_func = self.get_tbforce().cal_vdw
-        cutoff    = self.get_setting().curp.vdw_cutoff_length
+        cutoff = self.get_setting().curp.vdw_cutoff_length
 
         t0 = time.time()
-        gen_tbfs = ( type_func(t)['tbforces'] for t in table )
-        flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table )
+        gen_tbfs = (type_func(t)["tbforces"] for t in table)
+        flux_atm, flux_grp = self.fcal.cal_nonbonded(vel, gen_tbfs, table)
 
         t1 = time.time()
         dt_flux = self.fcal.dt
 
-        self.store_time('vdw pairwise' , t1 - t0 - dt_flux)
-        self.store_time('vdw flux' , dt_flux)
+        self.store_time("vdw pairwise", t1 - t0 - dt_flux)
+        self.store_time("vdw flux", dt_flux)
 
         return flux_atm, flux_grp
 
 
 ################################################################################
 import lib_flux
-class EnergyFlux:
 
-    def __init__(self, target_atoms, iatm_to_igrp, bonded_pairs,
-                       flag_atm=True, flag_grp=True):
+
+class EnergyFlux:
+    def __init__(
+        self, target_atoms, iatm_to_igrp, bonded_pairs, flag_atm=True, flag_grp=True
+    ):
         self.__flag_atm = flag_atm
         self.__flag_grp = flag_grp
 
-        lib_flux.bonded.initialize( target_atoms, iatm_to_igrp,
-                bonded_pairs, flag_atm, flag_grp)
-        lib_flux.nonbonded.initialize( target_atoms, iatm_to_igrp,
-                flag_atm, flag_grp)
+        lib_flux.bonded.initialize(
+            target_atoms, iatm_to_igrp, bonded_pairs, flag_atm, flag_grp
+        )
+        lib_flux.nonbonded.initialize(target_atoms, iatm_to_igrp, flag_atm, flag_grp)
 
     def cal_bonded(self, vel, tbfs):
         """Calculate the flux due to bonded potentials."""
@@ -164,8 +170,10 @@ class EnergyFlux:
 
         return flux_atm, flux_grp
 
+
 ################################################################################
 ################################## HEAT FLUX ###################################
+
 
 class HeatFluxCalculator(base.FluxCalculator):
 
@@ -181,21 +189,25 @@ class HeatFluxCalculator(base.FluxCalculator):
         base.FluxCalculator.prepare(self, *args, **kwds)
 
         ftype = self.get_setting().curp.flux_grain
-        if ftype == 'atom':
-            flag_atom  = True
+        if ftype == "atom":
+            flag_atom = True
             flag_group = False
-        elif ftype == 'group':
-            flag_atom  = False
+        elif ftype == "group":
+            flag_atom = False
             flag_group = True
-        elif ftype == 'both':
-            flag_atom  = True
+        elif ftype == "both":
+            flag_atom = True
             flag_group = True
         else:
             pass
 
-        self.fcal = HeatFlux( self.get_target_atoms(),
-                self.get_iatm_to_igrp(), self.get_bonded_pairs(),
-                flag_atom, flag_group)
+        self.fcal = HeatFlux(
+            self.get_target_atoms(),
+            self.get_iatm_to_igrp(),
+            self.get_bonded_pairs(),
+            flag_atom,
+            flag_group,
+        )
 
     def cal_bonded(self, crd, vel, bond_type):
         """Calculate the energy flux for the bonded term."""
@@ -205,8 +217,8 @@ class HeatFluxCalculator(base.FluxCalculator):
         # calculate two-body force of bonded interactions
         t0 = time.time()
         tbfs_info = tbcal.cal_bonded(bond_type)
-        tbfs      = tbfs_info['tbforces']
-        displacement = tbfs_info['displacement']
+        tbfs = tbfs_info["tbforces"]
+        displacement = tbfs_info["displacement"]
 
         # calculate current
         t1 = time.time()
@@ -214,69 +226,73 @@ class HeatFluxCalculator(base.FluxCalculator):
 
         # log the elasped times
         t2 = time.time()
-        self.store_time(bond_type+' pairwise', t1-t0)
-        self.store_time(bond_type+' flux' , t2-t1)
+        self.store_time(bond_type + " pairwise", t1 - t0)
+        self.store_time(bond_type + " flux", t2 - t1)
 
         return flux_atm, flux_grp
 
     def cal_coulomb(self, crd, vel):
         """Calculate the energy flux for the coulomb term."""
 
-        table     = self.get_interact_table()
+        table = self.get_interact_table()
         type_func = self.get_tbforce().cal_coulomb
-        cutoff    = self.get_setting().curp.coulomb_cutoff_length
+        cutoff = self.get_setting().curp.coulomb_cutoff_length
 
         t0 = time.time()
-        gen_tbfs = (type_func(t)['tbforces'] for t in table)
-        gen_displacement = ( type_func(t)['displacement'] for t in table )
+        gen_tbfs = (type_func(t)["tbforces"] for t in table)
+        gen_displacement = (type_func(t)["displacement"] for t in table)
 
-        flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table,
-                                                      gen_displacement )
+        flux_atm, flux_grp = self.fcal.cal_nonbonded(
+            vel, gen_tbfs, table, gen_displacement
+        )
 
         t1 = time.time()
         dt_flux = self.fcal.dt
 
-        self.store_time('coulomb pairwise' , t1 - t0 - dt_flux)
-        self.store_time('coulomb flux' , dt_flux)
+        self.store_time("coulomb pairwise", t1 - t0 - dt_flux)
+        self.store_time("coulomb flux", dt_flux)
 
         return flux_atm, flux_grp
 
     def cal_vdw(self, crd, vel):
         """Calculate the energy flux for the vdW term."""
 
-        table     = self.get_interact_table()
+        table = self.get_interact_table()
         type_func = self.get_tbforce().cal_vdw
-        cutoff    = self.get_setting().curp.vdw_cutoff_length
+        cutoff = self.get_setting().curp.vdw_cutoff_length
 
         t0 = time.time()
-        gen_tbfs = ( type_func(t)['tbforces'] for t in table )
-        gen_displacement = ( type_func(t)['displacement'] for t in table )
+        gen_tbfs = (type_func(t)["tbforces"] for t in table)
+        gen_displacement = (type_func(t)["displacement"] for t in table)
 
-        flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table,
-                                                      gen_displacement )
+        flux_atm, flux_grp = self.fcal.cal_nonbonded(
+            vel, gen_tbfs, table, gen_displacement
+        )
 
         t1 = time.time()
         dt_flux = self.fcal.dt
 
-        self.store_time('vdw pairwise' , t1 - t0 - dt_flux)
-        self.store_time('vdw flux' , dt_flux)
+        self.store_time("vdw pairwise", t1 - t0 - dt_flux)
+        self.store_time("vdw flux", dt_flux)
 
         return flux_atm, flux_grp
 
 
 ################################################################################
 import lib_hflux
-class HeatFlux:
 
-    def __init__(self, target_atoms, iatm_to_igrp, bonded_pairs,
-                       flag_atm=True, flag_grp=True):
+
+class HeatFlux:
+    def __init__(
+        self, target_atoms, iatm_to_igrp, bonded_pairs, flag_atm=True, flag_grp=True
+    ):
         self.__flag_atm = flag_atm
         self.__flag_grp = flag_grp
 
-        lib_hflux.bonded.initialize( target_atoms, iatm_to_igrp,
-                bonded_pairs, flag_atm, flag_grp)
-        lib_hflux.nonbonded.initialize( target_atoms, iatm_to_igrp,
-                flag_atm, flag_grp)
+        lib_hflux.bonded.initialize(
+            target_atoms, iatm_to_igrp, bonded_pairs, flag_atm, flag_grp
+        )
+        lib_hflux.nonbonded.initialize(target_atoms, iatm_to_igrp, flag_atm, flag_grp)
 
     def cal_bonded(self, vel, tbfs, displ):
         """Calculate the flux due to bonded potentials."""
@@ -324,13 +340,11 @@ class HeatFlux:
         return hflux_atm, hflux_grp
 
 
-
-
 ################################################################################
-#TODO
+# TODO
 class StressFluxCalculator(base.FluxCalculator):
 
-    #TODO: volume calculation
+    # TODO: volume calculation
     def cal_bonded_flux(self):
         """Calculate the stress flux for the bonded terms."""
 
@@ -346,7 +360,7 @@ class StressFluxCalculator(base.FluxCalculator):
         flux_pot = {}
         for gname_i in group_names:
             for gname_j in group_names:
-                ts = numpy.zeros([3,3])
+                ts = numpy.zeros([3, 3])
                 flux_pot[gname_i, gname_j] = ts
 
         # bonded two-body force
@@ -378,7 +392,7 @@ class StressFluxCalculator(base.FluxCalculator):
         flux_pot = {}
         for gname_i in group_names:
             for gname_j in group_names:
-                ts = numpy.zeros([3,3])
+                ts = numpy.zeros([3, 3])
                 flux_pot[gname_i, gname_j] = ts
 
         for iatm, jatm_ptr, f_ijs in gen_tbforces_each_atom:
@@ -397,6 +411,5 @@ class StressFluxCalculator(base.FluxCalculator):
         return flux_pot
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     cal = EnergyFluxCalculator()

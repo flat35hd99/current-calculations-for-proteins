@@ -5,18 +5,22 @@ from collections import OrderedDict as odict
 import numpy
 
 # curp mudules
-topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if topdir not in sys.path:
     sys.path.insert(0, topdir)
 import exception
 import clog as logger
 import interact_table as it
 
-class InvalidGroupName(exception.CurpException): pass
+
+class InvalidGroupName(exception.CurpException):
+    pass
+
 
 import ini_parser as ini
-class GroupPairParser(ini.IniParser):
 
+
+class GroupPairParser(ini.IniParser):
     def __init__(self, gpair_fn, gnames):
         ini.IniParser.__init__(self, gpair_fn)
         self.__gnames_base = gnames
@@ -30,8 +34,9 @@ class GroupPairParser(ini.IniParser):
         if not (set(gnames) <= set(self.__gnames_base)):
             invalid_names = list(set(gnames) - set(self.__gnames_base))
             msg = "{} in {} is invalid group names !".format(
-                    invalid_names, self.get_filename())
-            
+                invalid_names, self.get_filename()
+            )
+
             raise InvalidGroupName(msg)
 
         for gname_i in gnames:
@@ -40,7 +45,8 @@ class GroupPairParser(ini.IniParser):
             if not (set(gnames_j) <= set(self.__gnames_base)):
                 invalid_names = list(set(gnames_j) - set(self.__gnames_base))
                 msg = "{} in {} is invalid group names !".format(
-                        invalid_names, self.get_filename())
+                    invalid_names, self.get_filename()
+                )
                 raise InvalidGroupName(msg)
 
     def get_gpair_table(self):
@@ -48,7 +54,6 @@ class GroupPairParser(ini.IniParser):
 
 
 class GroupPair:
-
     def __init__(self, gpair_table, gname_to_iatoms, natom):
         self.__gpair_table = gpair_table
         self.__gname_to_iatoms = gname_to_iatoms
@@ -72,11 +77,14 @@ class GroupPair:
                 for jatm_beg, jatm_end in comp_jatoms:
                     yield iatm, jatm_beg, jatm_end
 
+    # compute.pyからはinttableを渡して新しいものを受け取るように見える。
+    # 実際、_make_table_with_gpairで作成して、それを返している。
     def get_inttable_with_gpair(self, base_table):
         if self.__table_with_gpair is None:
             self.__table_with_gpair = self._make_table_with_gpair(base_table)
         return self.__table_with_gpair
 
+    # そもそも論、base_tableとはなんや。。
     def _make_table_with_gpair(self, base_table):
         """Make interaction table with group pairs."""
 
@@ -84,6 +92,7 @@ class GroupPair:
         base_table = numpy.array(list(base_table))
 
         import lib_group_pair
+
         lib_gpair = lib_group_pair.within_gpair
         lib_gpair.setup(table_with_gpair, self.__natom)
 
@@ -92,7 +101,8 @@ class GroupPair:
         new_table = new_table[:ntable].tolist()
         return it.InteractionTable(base_table=new_table)
 
-def gen_compressed_iatms( iatoms ):
+
+def gen_compressed_iatms(iatoms):
     """Convert: [1,2,3,6,7,8,...,100] => [(1,3),(6,100)]"""
 
     iatoms.sort()
@@ -101,7 +111,7 @@ def gen_compressed_iatms( iatoms ):
 
     for iatm in iatoms[1:]:
 
-        if iatm != iatm_end+1:
+        if iatm != iatm_end + 1:
             yield (iatm_beg, iatm_end)
             iatm_beg = iatm
 
@@ -111,14 +121,18 @@ def gen_compressed_iatms( iatoms ):
         yield (iatm_beg, iatm_end)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
-    gpair_fn = os.path.join(os.environ['CURP_HOME'],
-            'test', 'energy-flux', 'pickup', 'gpair.dat')
-    tplprm_fn = os.path.join(os.environ['CURP_HOME'],
-            'test', 'amber-b2AR', 'stripped.prmtop.gz')
+
+    gpair_fn = os.path.join(
+        os.environ["CURP_HOME"], "test", "energy-flux", "pickup", "gpair.dat"
+    )
+    tplprm_fn = os.path.join(
+        os.environ["CURP_HOME"], "test", "amber-b2AR", "stripped.prmtop.gz"
+    )
 
     from parser.amber.topology import TopologyParser, Format2AmberBaseConverter
+
     raw_tpl = TopologyParser(tplprm_fn)
     raw_tpl.parse()
     tpl = Format2AmberBaseConverter(raw_tpl, use_atomtype=False)
@@ -128,19 +142,18 @@ if __name__ == '__main__':
     res_info = tpl.get_residue_info()
 
     import group
-    gnames = [ gname for gname, iatoms
-            in group.gen_residue_group(res_info, atom_info) ]
+
+    gnames = [gname for gname, iatoms in group.gen_residue_group(res_info, atom_info)]
 
     # for gname in gnames:
-        # print(gname)
+    # print(gname)
 
     gpair_parser = GroupPairParser(gpair_fn, gnames)
     for i in gpair_parser.get_gpair_table():
         print(i)
 
     # with bm('gen_compressed_iatms'):
-        # print()
-        # iatoms = [1,2,3,8,9,10,11,12,13]
-        # table = gen_compressed_iatms(iatoms)
-        # print(list(table))
-
+    # print()
+    # iatoms = [1,2,3,8,9,10,11,12,13]
+    # table = gen_compressed_iatms(iatoms)
+    # print(list(table))

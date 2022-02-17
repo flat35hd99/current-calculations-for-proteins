@@ -1,8 +1,8 @@
-
 import sys
 import numpy
 
-section_end = '%end'
+section_end = "%end"
+
 
 def parse_content(file):
 
@@ -11,15 +11,17 @@ def parse_content(file):
     gen_lines = gen_optimized_lines(file)
     sections = []
     for line in gen_lines:
-        if not is_section(line): continue
+        if not is_section(line):
+            continue
 
         flagname = line[1:].strip()
-        if flagname == 'data':
-            lines = list( gen_section_lines(gen_lines) )
+        if flagname == "data":
+            lines = list(gen_section_lines(gen_lines))
             names, tensor = parse_data(lines)
-            tensors.append( numpy.array(tensor) )
+            tensors.append(numpy.array(tensor))
 
     return names, tensors
+
 
 def parse_data(lines):
     names = []
@@ -27,9 +29,10 @@ def parse_data(lines):
     for line in lines:
         cols = line.split()
         names.append(cols[0])
-        tensor.append( [float(c) for c in cols[1:]] )
+        tensor.append([float(c) for c in cols[1:]])
 
     return names, tensor
+
 
 def gen_optimized_lines(file):
     # first flag
@@ -48,19 +51,22 @@ def gen_optimized_lines(file):
     else:
         yield section_end
 
+
 def split_content(gen):
     lines = []
     for line in gen:
-        if line.startswith('%'):
+        if line.startswith("%"):
             pass
+
 
 def is_section(line):
     if line == section_end:
         return False
-    elif line.startswith('%'):
+    elif line.startswith("%"):
         return True
     else:
         return False
+
 
 def gen_section_lines(gen):
     for line in gen:
@@ -71,10 +77,6 @@ def gen_section_lines(gen):
         yield line
 
 
-
-            
-
-
 def cal_average(tensors):
 
     sum_tensor = numpy.zeros(tensors[0].shape)
@@ -83,7 +85,8 @@ def cal_average(tensors):
         sum_tensor += t
 
     nten = len(tensors)
-    return sum_tensor/nten
+    return sum_tensor / nten
+
 
 def cal_rmsf(tensors, average_tensor):
 
@@ -97,22 +100,28 @@ def cal_rmsf(tensors, average_tensor):
 
     return numpy.sqrt(rmsf_tensor) / nten
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     # make argument parser
     import argparse
-    parser = argparse.ArgumentParser('Get the averaged tensor.')
+
+    parser = argparse.ArgumentParser("Get the averaged tensor.")
 
     # add argument definitions
     parser.add_argument(
-            '-i', '--input-data', dest='data_filename', required=True,
-            help='specify input filename for the stress data.')
+        "-i",
+        "--input-data",
+        dest="data_filename",
+        required=True,
+        help="specify input filename for the stress data.",
+    )
 
     # make arguments
     args = parser.parse_args()
 
     filename = args.data_filename
-    with open(filename, 'rb') as file:
+    with open(filename, "rb") as file:
         names, tensors = parse_content(file)
 
     ave_tensor = cal_average(tensors)
@@ -121,7 +130,3 @@ if __name__ == '__main__':
         print(name)
         print(avet)
         print(rmsft)
-
-    
-
-

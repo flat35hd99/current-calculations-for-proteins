@@ -1,8 +1,8 @@
 import pygraphviz as pgv
 
-filename = 'hoge.pdf'
+filename = "hoge.pdf"
 
-dot = '''
+dot = """
 digraph {
   rankdir=LR
   node [shape=plaintext]
@@ -30,7 +30,7 @@ digraph {
     key:i5:e -> key2:i5:w [color=red, style=dotted]
   }
 }
-'''
+"""
 
 graph = pgv.AGraph(dot)
 for n in graph.iteredges():
@@ -42,7 +42,7 @@ graph.add_edge(1, 2, penwidth=1)
 # print(graph.has_edge(2,1))
 # print(graph.get_edge(1,2).attr['penwidth'])
 
-graph.layout(prog='dot')
+graph.layout(prog="dot")
 graph.draw(filename)
 
 # a = {}

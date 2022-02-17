@@ -39,13 +39,13 @@ class InteractionTableGenerator:
         self.__cache = None
 
     def _init_table(self, natom):
-        for iatm_1 in range(natom-1):
+        for iatm_1 in range(natom - 1):
             iatm = iatm_1 + 1
-            yield (iatm, iatm+1, natom)
+            yield (iatm, iatm + 1, natom)
 
     def filter(self, if_fun):
         self.__filters.append(if_fun)
-        return self 
+        return self
 
     def insert_filter(self, if_fun):
         self.__filters.insert(0, if_fun)
@@ -59,7 +59,8 @@ class InteractionTableGenerator:
 
     def next(self):
         return self.__apply().next()
-    __next__ = next # version 3.x
+
+    __next__ = next  # version 3.x
 
     def copy(self):
         gen1, gen2 = itertools.tee(self.__apply())
@@ -78,31 +79,32 @@ class InteractionTableGenerator:
 
             jatm_beg_new = 0
             jatm_end_new = jatm_beg
-            
-            for jatm in range(jatm_beg, jatm_end+1):
-                print('jatm before', jatm, jatm_end)
+
+            for jatm in range(jatm_beg, jatm_end + 1):
+                print("jatm before", jatm, jatm_end)
 
                 for if_fun in self.__filters:
                     if not if_fun(iatm, jatm):
-                        print('aaa')
+                        print("aaa")
                         if jatm_beg_new > 0:
-                            print('bbb',iatm, jatm_beg_new, jatm_end_new)
-                ########################### here bug ########################
+                            print("bbb", iatm, jatm_beg_new, jatm_end_new)
+                            ########################### here bug ########################
                             yield iatm, jatm_beg_new, jatm_end_new
-                            print('ccc')
+                            print("ccc")
                             jatm_beg_new = 0
-                        print('ddd')
+                        print("ddd")
                         # break
 
-                else: # filters are all ok.
-                    print('filter else', jatm, jatm_end)
-                    if jatm_beg_new==0: jatm_beg_new = jatm
+                else:  # filters are all ok.
+                    print("filter else", jatm, jatm_end)
+                    if jatm_beg_new == 0:
+                        jatm_beg_new = jatm
                     jatm_end_new = jatm
 
-                print('jatm after', jatm)
+                print("jatm after", jatm)
 
             else:
-                print('jatm else', jatm)
+                print("jatm else", jatm)
                 if jatm_beg_new > 0:
                     yield iatm, jatm_beg_new, jatm_end_new
 
@@ -116,14 +118,16 @@ class InteractionTableGenerator:
 
             jatm_beg_new = 0
             jatm_end_new = jatm_beg
-            
-            for jatm in range(jatm_beg, jatm_end+1):
+
+            for jatm in range(jatm_beg, jatm_end + 1):
 
                 if if_function(iatm, jatm):
-                    if jatm_beg_new==0: jatm_beg_new = jatm
+                    if jatm_beg_new == 0:
+                        jatm_beg_new = jatm
                     jatm_end_new = jatm
                 else:
-                    if jatm_beg_new==0: continue
+                    if jatm_beg_new == 0:
+                        continue
                     yield iatm, jatm_beg_new, jatm_end_new
                     jatm_beg_new = 0
 
@@ -135,14 +139,14 @@ class InteractionTableGenerator:
         length2 = length**2
 
         def wrapper(iatm, jatm):
-            dist2 = numpy.dot(crd[iatm,:] - crd[jatm,:])
+            dist2 = numpy.dot(crd[iatm, :] - crd[jatm, :])
             return dist2 < length2
 
         return wrapper
 
     def gen_each_atom(self):
         """Generator: InteractionTable data divided by each atoms."""
-        cur_iatm  = 1
+        cur_iatm = 1
         int_table = []
 
         for iatm, jatm_beg, jatm_end in self:
@@ -193,7 +197,7 @@ class InteractionTableList:
     >>> table.map()
     """
 
-    _memory_limit = 10 # MB
+    _memory_limit = 10  # MB
 
     def __init__(self, natom=None, base_table=None):
         self.__natom = natom
@@ -212,9 +216,9 @@ class InteractionTableList:
         self.__table = []
 
     def _init_table(self, natom):
-        for iatm_1 in range(natom-1):
+        for iatm_1 in range(natom - 1):
             iatm = iatm_1 + 1
-            yield (iatm, iatm+1, natom)
+            yield (iatm, iatm + 1, natom)
 
     def filter_iatom(self, if_fun):
         self.__ifilters.append(if_fun)
@@ -222,18 +226,18 @@ class InteractionTableList:
 
     def filter(self, if_fun):
         self.__filters.append(if_fun)
-        return self 
+        return self
 
     def filter_or(self, iatm_beg, iatm_end):
-        self.__filters.append( ('or', iatm_beg, iatm_end) )
+        self.__filters.append(("or", iatm_beg, iatm_end))
         return self
 
     def filter_and(self, iatm_beg, iatm_end):
-        self.__filters.append( ('and', iatm_beg, iatm_end) )
+        self.__filters.append(("and", iatm_beg, iatm_end))
         return self
 
     def filter_fun(self, if_fun):
-        self.__filters.append( ('fun', if_fun) )
+        self.__filters.append(("fun", if_fun))
         return self
 
     def insert_filter(self, if_fun):
@@ -257,7 +261,7 @@ class InteractionTableList:
 
         return self.__table[self.__cnt]
 
-    __next__ = next # version 3.x
+    __next__ = next  # version 3.x
 
     def copy(self):
         gen1, gen2 = itertools.tee(self.__apply())
@@ -279,7 +283,7 @@ class InteractionTableList:
                     yield iatm, jatm_beg, jatm_end
 
                 elif i_end < iatm:
-                    break 
+                    break
 
                 else:
                     pass
@@ -290,11 +294,11 @@ class InteractionTableList:
                 if iatm < i_beg:
                     pass
 
-                elif i_beg <= iatm <= i_end-1:
+                elif i_beg <= iatm <= i_end - 1:
                     yield iatm, jatm_beg, jatm_end
 
-                elif i_end-1 < iatm:
-                    break 
+                elif i_end - 1 < iatm:
+                    break
 
                 else:
                     pass
@@ -302,11 +306,11 @@ class InteractionTableList:
         def gen_filter_fun(table, if_fun):
 
             for iatm, jatm_beg, jatm_end in table:
-                
+
                 jatm_beg_new = 0
                 jatm_end_new = jatm_beg
-                
-                for jatm in range(jatm_beg, jatm_end+1):
+
+                for jatm in range(jatm_beg, jatm_end + 1):
 
                     if not if_fun(iatm, jatm):
                         if jatm_beg_new > 0:
@@ -314,7 +318,8 @@ class InteractionTableList:
                             jatm_beg_new = 0
 
                     else:
-                        if jatm_beg_new==0: jatm_beg_new = jatm
+                        if jatm_beg_new == 0:
+                            jatm_beg_new = jatm
                         jatm_end_new = jatm
 
                 else:
@@ -325,15 +330,15 @@ class InteractionTableList:
         for f in self.__filters:
             ftype = f[0]
 
-            if ftype == 'or':
+            if ftype == "or":
                 i_beg, i_end = f[1], f[2]
                 next_table = gen_filter_or(table, i_beg, i_end)
 
-            elif ftype == 'and':
+            elif ftype == "and":
                 i_beg, i_end = f[1], f[2]
                 next_table = gen_filter_and(table, i_beg, i_end)
 
-            elif ftype == 'fun':
+            elif ftype == "fun":
                 if_fun = f[1]
                 next_table = gen_filter_fun(table, if_fun)
 
@@ -352,7 +357,7 @@ class InteractionTableList:
         length2 = length**2
 
         def wrapper(iatm, jatm):
-            dist2 = numpy.dot(crd[iatm,:] - crd[jatm,:])
+            dist2 = numpy.dot(crd[iatm, :] - crd[jatm, :])
             return dist2 < length2
 
         return wrapper
@@ -373,7 +378,7 @@ class InteractionTableList:
 
     def gen_each_atom(self):
         """Generator: InteractionTable data divided by each atoms."""
-        cur_iatm  = 1
+        cur_iatm = 1
         table = []
 
         for iatm, jatm_beg, jatm_end in self:
@@ -404,7 +409,7 @@ class InteractionTableList:
 
         for iatm, jatm_beg, jatm_end in self:
             npair += jatm_end - jatm_beg + 1
-            table.append( (iatm, jatm_beg, jatm_end) )
+            table.append((iatm, jatm_beg, jatm_end))
 
             if npair > num_pair_limits:
                 yield table
@@ -439,7 +444,7 @@ class InteractionTableList:
             mem = self.get_size(npair)
 
             if mem_lower <= mem <= mem_upper:
-                self.__memories.append( mem )
+                self.__memories.append(mem)
                 yield table
                 npair = 0
                 table = []
@@ -447,7 +452,7 @@ class InteractionTableList:
             elif mem_upper < mem:
                 iatm_p, jatm_beg_p, jatm_end_p = table.pop()
                 mem = self.get_size(npair_p)
-                self.__memories.append( mem )
+                self.__memories.append(mem)
                 yield table
                 npair = jatm_beg_p - jatm_beg_p + 1
                 table = [(iatm_p, jatm_beg_p, jatm_end_p)]
@@ -456,23 +461,24 @@ class InteractionTableList:
 
         else:
             mem = self.get_size(npair_p)
-            self.__memories.append( mem )
-            if table: yield table
+            self.__memories.append(mem)
+            if table:
+                yield table
 
     def gen_divided_table_memory(self):
         """Generate a table divided by memory limit."""
 
         # if self._memory_limit is None:
-            # memory_limt = self._memory_limit
+        # memory_limt = self._memory_limit
 
         self.__memories = []
         memory_lower = self._memory_limit * 10**3
         memory_upper = 1.2 * memory_lower
         base_table = list(self)
 
-        for itab, (iatm,jatm_beg,jatm_end) in enumerate(base_table):
+        for itab, (iatm, jatm_beg, jatm_end) in enumerate(base_table):
 
-            if itab==0:
+            if itab == 0:
                 iatm_min, iatm_max = iatm, iatm
                 jatm_min, jatm_max = jatm_beg, jatm_end
                 table = [(iatm, jatm_beg, jatm_end)]
@@ -487,9 +493,9 @@ class InteractionTableList:
             memory = self.get_size(iatm_min, iatm_max, jatm_min, jatm_max)
 
             if memory_lower < memory < memory_upper:
-                self.__memories.append( memory )
+                self.__memories.append(memory)
                 # print('memory', iatm_min, iatm_max, jatm_min, jatm_max)
-                print('bound', iatm_max-iatm_min+1, jatm_max-jatm_min+1)
+                print("bound", iatm_max - iatm_min + 1, jatm_max - jatm_min + 1)
                 yield table
                 iatm_min = iatm
                 jatm_min = jatm_end
@@ -497,12 +503,11 @@ class InteractionTableList:
 
             elif memory_upper <= memory:
                 # print('memory', iatm_min, iatm_max, jatm_min, jatm_max)
-                iatm_p, jatm_beg_p, jatm_end_p  = table.pop()
+                iatm_p, jatm_beg_p, jatm_end_p = table.pop()
                 # print('bound', iatm_max-iatm_min+1, jatm_max-jatm_min+1)
-                memory = self.get_size(
-                        iatm_min_p, iatm_max_p, jatm_min_p, jatm_max_p)
-                print('bound', iatm_max_p-iatm_min_p+1, jatm_max_p-jatm_min_p+1)
-                self.__memories.append( memory )
+                memory = self.get_size(iatm_min_p, iatm_max_p, jatm_min_p, jatm_max_p)
+                print("bound", iatm_max_p - iatm_min_p + 1, jatm_max_p - jatm_min_p + 1)
+                self.__memories.append(memory)
                 yield table
                 iatm_min = iatm_p
                 jatm_min = jatm_end_p
@@ -512,11 +517,12 @@ class InteractionTableList:
             iatm_max_p = iatm_max
             jatm_min_p = jatm_min
             jatm_max_p = jatm_max
-            
+
         else:
             memory = self.get_size(iatm_min, iatm_max, jatm_min, jatm_max)
-            self.__memories.append( memory )
-            if table: yield table
+            self.__memories.append(memory)
+            if table:
+                yield table
 
     gen_divided_table = gen_divided_table_pair
 
@@ -533,15 +539,15 @@ def make_accesible_table(pairs, natom):
     """
     # recreate the bonded pair list to make non-bonded interaction table
     # effectively.
-    pair_table = [ [] for iatm in range(natom) ]
+    pair_table = [[] for iatm in range(natom)]
     for iatm, jatm in pairs:
-        pair_table[iatm-1].append(jatm)
+        pair_table[iatm - 1].append(jatm)
     return pair_table
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    target = [5,7,8,9]
+    target = [5, 7, 8, 9]
 
     def if_fun_or(iatm, jatm):
         return (iatm in target) or (jatm in target)
@@ -555,25 +561,25 @@ if __name__ == '__main__':
     # def if_fun3(iatm):
     #     return iatm in range(100, 200)
 
-
     natom = 5000
     from benchmarker import Benchmarker
+
     with Benchmarker(width=20) as bm:
 
-        with bm('or'):
+        with bm("or"):
             print()
             table1 = InteractionTable(natom)
             t = table1.filter_or(5, 10)
             for a in t.gen_divided_table(5000):
                 print(a)
 
-        with bm('and'):
+        with bm("and"):
             print()
             table2 = InteractionTable(natom)
             t = table2.filter_and(10, 20)
             for a in t.gen_divided_table(40):
                 print(a)
-                
+
         # with bm('if_fun_or'):
         #     print()
         #     table3 = InteractionTable(natom)
@@ -588,10 +594,9 @@ if __name__ == '__main__':
         #     for a in t.gen_divided_table(40):
         #         print(a)
 
-        with bm('or, if_fun_or'):
+        with bm("or, if_fun_or"):
             print()
             table = InteractionTable(natom)
             t = table.filter_or(5, 10).filter_fun(if_fun_or)
             for a in t.gen_divided_table(40):
                 print(a)
-

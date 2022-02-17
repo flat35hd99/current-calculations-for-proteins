@@ -3,10 +3,11 @@ from __future__ import print_function
 import os, sys
 from collections import OrderedDict as odict
 
-topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+topdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if topdir not in sys.path:
     sys.path.insert(0, topdir)
 import exception
+
 
 class IniParser:
 
@@ -32,7 +33,7 @@ class IniParser:
     """
 
     section_end = "#[END_SECTION]"
-    comment = '#'
+    comment = "#"
 
     def __init__(self, filename):
         self.__filename = filename
@@ -43,7 +44,7 @@ class IniParser:
 
     def get_filename(self):
         return self.__filename
-        
+
     # def __setitem__(self, secname, value):
     #     pass
 
@@ -62,7 +63,7 @@ class IniParser:
     def parse(self):
         """Parse ini format content."""
 
-        with open(self.__filename, 'r') as file:
+        with open(self.__filename, "r") as file:
             secname_lines_pairs = self._parse_secname_lines_pairs(file)
 
         # parse vals
@@ -72,9 +73,11 @@ class IniParser:
 
         # parse attributes
         self.__secname_to_attrdict = odict()
-        for secname, lines, in secname_lines_pairs:
-            self.__secname_to_attrdict[secname] = odict(
-                    self._gen_attr_val(lines))
+        for (
+            secname,
+            lines,
+        ) in secname_lines_pairs:
+            self.__secname_to_attrdict[secname] = odict(self._gen_attr_val(lines))
 
     def gen_secname_cols_pair(self):
         """Generate section_name: columns pair."""
@@ -83,13 +86,14 @@ class IniParser:
 
     def _gen_col(self, lines):
         for line in lines:
-            if '=' in line: continue
+            if "=" in line:
+                continue
             for col in line.split():
                 yield col
 
     def _gen_attr_val(self, lines):
         for line in lines:
-            cols = line.split('=')
+            cols = line.split("=")
             if len(cols) == 2:
                 yield cols[0].strip(), cols[1].strip()
 
@@ -100,7 +104,7 @@ class IniParser:
         for line in gen_lines:
             if self._is_section(line):
                 lines = list(self._gen_section_lines(gen_lines))
-                sections.append( (line[1:-1].strip(), lines) )
+                sections.append((line[1:-1].strip(), lines))
 
         return sections
 
@@ -119,10 +123,10 @@ class IniParser:
             if self._is_section(line):
                 yield line
                 break
-            elif line == '':
+            elif line == "":
                 continue
             else:
-                mes = 'found the invalid string before first section marker: '
+                mes = "found the invalid string before first section marker: "
                 raise ParserError(mes + line)
 
         # rest
@@ -131,7 +135,7 @@ class IniParser:
             if self._is_section(line):
                 yield self.section_end
                 yield line
-            elif line != '':
+            elif line != "":
                 yield line
             else:
                 continue
@@ -141,11 +145,9 @@ class IniParser:
     def _is_section(self, line):
         if line == self.section_end:
             return False
-        elif line.startswith('[') and line.endswith(']'):
+        elif line.startswith("[") and line.endswith("]"):
             return True
-        elif line.startswith('[') or line.endswith(']'):
+        elif line.startswith("[") or line.endswith("]"):
             raise SectionNotFoundError(line)
         else:
             return False
-
-

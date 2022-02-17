@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-scale_factor = 20.455 * 10.0**(-3)
+scale_factor = 20.455 * 10.0 ** (-3)
 
 try:
     import lib_parser
@@ -8,22 +8,25 @@ except ImportError:
     lib_parser = None
 
 from exception import CurpException
-class NumAtomInvalidError(CurpException): pass
+
+
+class NumAtomInvalidError(CurpException):
+    pass
 
 
 import gzip
 import numpy
 
-class ParserPyBase:
 
+class ParserPyBase:
     def __init__(self, filename, natom, use_pbc=False):
         self.__natom = natom
         self.__use_pbc = use_pbc
 
-        if filename.endswith('.gz'):
-            self.__file = gzip.open(filename, 'rb')
+        if filename.endswith(".gz"):
+            self.__file = gzip.open(filename, "rb")
         else:
-            self.__file = open(filename, 'rb')
+            self.__file = open(filename, "rb")
         title = self.parse_header(self.__file)
 
     def _set_module(self, module):
@@ -37,7 +40,7 @@ class ParserPyBase:
 
         return numpy.array(crdvel), box
 
-    next = __next__ # for python 2.x
+    next = __next__  # for python 2.x
 
     def __iter__(self):
         return self
@@ -46,20 +49,20 @@ class ParserPyBase:
         return file.next()
 
     def parse_data(self, file, natom):
-        nline = natom*3 / 10
-        rem   = natom*3 % 10
+        nline = natom * 3 / 10
+        rem = natom * 3 % 10
         try:
             for iline in range(nline):
                 line = file.next()
                 for icol in range(10):
-                    beg, end = 8*icol, 8*(icol+1)
+                    beg, end = 8 * icol, 8 * (icol + 1)
                     yield float(line[beg:end])
 
             else:
                 if rem != 0:
                     line = file.next()
                     for icol in range(rem):
-                        beg, end = 8*icol, 8*(icol+1)
+                        beg, end = 8 * icol, 8 * (icol + 1)
                         yield float(line[beg:end])
 
         except ValueError:
@@ -79,7 +82,7 @@ class ParserPyBase:
 
         # parse the info of periodic boudary condition
         line = file.next()
-        p1, p2, p3 = line[0:8],  line[8:16], line[16:24]
+        p1, p2, p3 = line[0:8], line[8:16], line[16:24]
         return [float(p) for p in [p1, p2, p3]]
 
     def close(self):
@@ -90,7 +93,6 @@ class ParserPyBase:
 
 
 class ParserFortBase:
-
     def __init__(self, filename, natom, use_pbc=False):
         self.__mod.initialize(filename)
         self.__natom = natom
@@ -110,22 +112,24 @@ class ParserFortBase:
             return crd, box
         else:
             return crd, None
-    next = __next__ # for python 2.x
+
+    next = __next__  # for python 2.x
 
     def __iter__(self):
         return self
 
+
 ParserBase = ParserPyBase
 
-class CoordinateParser(ParserBase):
 
+class CoordinateParser(ParserBase):
     def __init__(self, *args, **kwds):
         if lib_parser:
             self._set_module(lib_parser.formatted_coordinate)
         ParserBase.__init__(self, *args, **kwds)
 
-class VelocityParser_half_dt(ParserBase):
 
+class VelocityParser_half_dt(ParserBase):
     def __init__(self, *args, **kwds):
         if lib_parser:
             self._set_module(lib_parser.formatted_velocity)
@@ -137,32 +141,34 @@ class VelocityParser_half_dt(ParserBase):
         vel, box = ParserBase.__next__(self)
         vel_half = 0.5 * (vel + self.__vel_old)
         self.__vel_old = vel
-        return scale_factor*vel_half, box
+        return scale_factor * vel_half, box
 
-    next = __next__ # for python 2.x
+    next = __next__  # for python 2.x
+
 
 class VelocityParserNormal(ParserBase):
-
     def __init__(self, *args, **kwds):
         if lib_parser:
             self._set_module(lib_parser.formatted_velocity)
-        kwds['use_pbc'] = False
+        kwds["use_pbc"] = False
         ParserBase.__init__(self, *args, **kwds)
 
     def __next__(self):
         vel, box = ParserBase.__next__(self)
         return scale_factor * vel, box
 
-    next = __next__ # for python 2.x
+    next = __next__  # for python 2.x
+
 
 VelocityParser = VelocityParserNormal
 
 import netCDF4 as netcdf
 
+
 class NetCDFReaderBase:
 
-    trjname = None # A inheritanced class must have this variable.
-    scale_factor   = 1.0
+    trjname = None  # A inheritanced class must have this variable.
+    scale_factor = 1.0
 
     def __init__(self, filename, natom=None, use_pbc=False):
 
@@ -173,16 +179,16 @@ class NetCDFReaderBase:
             from netCDF4 import Dataset
         except ImportError:
             raise
-        trjobj = Dataset(filename, mode='r')
+        trjobj = Dataset(filename, mode="r")
 
-        self._natom  = len(trjobj.dimensions['atom'])
-        self._nframe = len(trjobj.dimensions['frame'])
-        self.title   = getattr(trjobj, 'title', None)
+        self._natom = len(trjobj.dimensions["atom"])
+        self._nframe = len(trjobj.dimensions["frame"])
+        self.title = getattr(trjobj, "title", None)
         if use_pbc:
-            if 'cell_lengths' in trjobj.variables: #add 17.06.29
-                self._box1 = trjobj.variables['cell_lengths']
-            if 'cell_angles' in trjobj.variables:  #add 17.06.29
-                self._box2 = trjobj.variables['cell_angles']
+            if "cell_lengths" in trjobj.variables:  # add 17.06.29
+                self._box1 = trjobj.variables["cell_lengths"]
+            if "cell_angles" in trjobj.variables:  # add 17.06.29
+                self._box2 = trjobj.variables["cell_angles"]
         self.__use_pbc = use_pbc
 
         self.__iter_cnt = 0
@@ -194,28 +200,28 @@ class NetCDFReaderBase:
     def __getitem__(self, ifrm):
         trjobj = self.open()
         trj_vars = trjobj.variables
-        time = trj_vars['time'][ifrm]
+        time = trj_vars["time"][ifrm]
         crdvel = trj_vars[self.trjname][ifrm]
 
         if self.__use_pbc:
-            if 'cell_lengths' in trj_vars: #add 17.06.29
-                box1 = trj_vars['cell_lengths'][ifrm]
-            else:  #add 17.06.29
-                box1=''  #add 17.06.29
-            if 'cell_angles' in trj_vars:  #add 17.06.29
-                box2 = trj_vars['cell_angles'][ifrm]
-            else:  #add 17.06.29
-                box2=''  #add 17.06.29
+            if "cell_lengths" in trj_vars:  # add 17.06.29
+                box1 = trj_vars["cell_lengths"][ifrm]
+            else:  # add 17.06.29
+                box1 = ""  # add 17.06.29
+            if "cell_angles" in trj_vars:  # add 17.06.29
+                box2 = trj_vars["cell_angles"][ifrm]
+            else:  # add 17.06.29
+                box2 = ""  # add 17.06.29
         else:
             n = len(crdvel)
             box1, box2 = None, None
 
         self.close()
 
-        #TODO convert the box information 1 matrix.
+        # TODO convert the box information 1 matrix.
         box = box1
 
-        return crdvel*self.scale_factor, box
+        return crdvel * self.scale_factor, box
 
     def __next__(self):
         try:
@@ -228,15 +234,17 @@ class NetCDFReaderBase:
 
         return crdvel, box
 
-    next = __next__ # for python 2.x
-    def __iter__(self): return self
+    next = __next__  # for python 2.x
+
+    def __iter__(self):
+        return self
 
     def parse_header(self, file):
         return file.next()
 
     def open(self):
         if self.__trjobj is None:
-            trjobj = netcdf.Dataset(self.__fp, mode='r')
+            trjobj = netcdf.Dataset(self.__fp, mode="r")
             self.__trjobj = trjobj
 
         return self.__trjobj
@@ -250,27 +258,28 @@ class NetCDFReaderBase:
     def get_dt(self):
         trjobj = self.open()
         trj_vars = trjobj.variables
-        times = trj_vars['time'][ifrm]
+        times = trj_vars["time"][ifrm]
         dt = times[1] - times[0]
         self.close()
         return dt
 
+
 class NetCDFReaderBaseNew:
 
-    trjname = None # A inheritanced class must have this variable.
-    scale_factor   = 1.0
+    trjname = None  # A inheritanced class must have this variable.
+    scale_factor = 1.0
 
     def __init__(self, filename, natom=None, use_pbc=False):
 
         self.__filename = filename
         trjobj = self.open(filename)
 
-        self._natom  = len(trjobj.dimensions['atom'])
-        self._nframe = len(trjobj.dimensions['frame'])
-        self.title   = getattr(trjobj, 'title', None)
+        self._natom = len(trjobj.dimensions["atom"])
+        self._nframe = len(trjobj.dimensions["frame"])
+        self.title = getattr(trjobj, "title", None)
         if use_pbc:
-            self._box1 = trjobj.variables['cell_lengths']
-            self._box2 = trjobj.variables['cell_angles']
+            self._box1 = trjobj.variables["cell_lengths"]
+            self._box2 = trjobj.variables["cell_angles"]
         self.__use_pbc = use_pbc
 
         self.__iter_cnt = 0
@@ -284,23 +293,22 @@ class NetCDFReaderBaseNew:
         trjobj = Dataset(filename)
         return trjobj
 
-
     def __getitem__(self, ifrm):
         trjobj = self.open(self.__filename)
         trj_vars = trjobj.variables
-        time = trj_vars['time'][ifrm]
+        time = trj_vars["time"][ifrm]
         crdvel = trj_vars[self.trjname][ifrm]
 
         if self.__use_pbc:
-            box1 = trj_vars['cell_lengths'][ifrm]
-            box2 = trj_vars['cell_angles'][ifrm]
+            box1 = trj_vars["cell_lengths"][ifrm]
+            box2 = trj_vars["cell_angles"][ifrm]
         else:
             n = len(crdvel)
             box1, box2 = None, None
 
         trjobj.close()
 
-        return crdvel*self.scale_factor, (box1, box2)
+        return crdvel * self.scale_factor, (box1, box2)
 
     def __next__(self):
         try:
@@ -313,8 +321,10 @@ class NetCDFReaderBaseNew:
 
         return crdvel, box
 
-    next = __next__ # for python 2.x
-    def __iter__(self): return self
+    next = __next__  # for python 2.x
+
+    def __iter__(self):
+        return self
 
     def parse_header(self, file):
         return file.next()
@@ -326,7 +336,7 @@ class NetCDFReaderBaseNew:
 
 class NetCDFCoordinateReader(NetCDFReaderBase):
 
-    trjname = 'coordinates'
+    trjname = "coordinates"
 
     def __init__(self, *args, **kwds):
         NetCDFReaderBase.__init__(self, *args, **kwds)
@@ -334,32 +344,34 @@ class NetCDFCoordinateReader(NetCDFReaderBase):
 
 class NetCDFVelocityReader(NetCDFReaderBase):
 
-    trjname = 'velocities'
+    trjname = "velocities"
     # The velocity unit in NetCDF is angstrom/(ps/20.455)
-    scale_factor = 1.0/10.0**3  # A/ps <= A/fs
+    scale_factor = 1.0 / 10.0**3  # A/ps <= A/fs
 
     def __init__(self, *args, **kwds):
         NetCDFReaderBase.__init__(self, *args, **kwds)
 
 
-class InvalidAtomNumber: pass
-class RestartParser:
+class InvalidAtomNumber:
+    pass
 
-    def __init__(self, filename, natom, use_pbc=False, trj_type='crdvel'):
+
+class RestartParser:
+    def __init__(self, filename, natom, use_pbc=False, trj_type="crdvel"):
         self.__filename = filename
-        self.__natom    = natom
-        self.__use_pbc  = use_pbc
+        self.__natom = natom
+        self.__use_pbc = use_pbc
 
     @classmethod
-    def set_trjtype(cls, trj_type='crd'):
+    def set_trjtype(cls, trj_type="crd"):
 
         cls.__use_crd = False
         cls.__use_vel = False
         cls.__parsed = False
 
-        if trj_type == 'crd':
+        if trj_type == "crd":
             cls.__use_crd = True
-        elif trj_type == 'vel':
+        elif trj_type == "vel":
             cls.__use_vel = True
         else:
             pass
@@ -377,21 +389,22 @@ class RestartParser:
         elif self.__use_vel:
             self.__parsed = True
             return vel, pbc
-        else: 
+        else:
             self.__parsed = True
             return (crd, vel), pbc
 
-    next = __next__ # for python 2.x
+    next = __next__  # for python 2.x
 
     def __iter__(self):
         return self
 
     def parse(self):
-        with open(self.__filename, 'rb') as file:
+        with open(self.__filename, "rb") as file:
             title, natom, simtime = self.parse_header(file)
             import numpy
-            crd = list( self.parse_crd_iter(file, natom) )
-            vel = list( self.parse_vel_iter(file, natom) )
+
+            crd = list(self.parse_crd_iter(file, natom))
+            vel = list(self.parse_vel_iter(file, natom))
 
             if self.__use_pbc:
                 pbc = self.parse_pbc(file)
@@ -418,17 +431,17 @@ class RestartParser:
         return title, natom, simtime
 
     def parse_data(self, file, natom):
-        for iline in range(natom/2):
+        for iline in range(natom / 2):
             line = file.next()
             for icol in range(6):
-                beg, end = 12*icol, 12*(icol+1)
+                beg, end = 12 * icol, 12 * (icol + 1)
                 yield float(line[beg:end])
 
         else:
-            if natom%2 == 1:
+            if natom % 2 == 1:
                 line = file.next()
                 for icol in range(3):
-                    beg, end = 12*icol, 12*(icol+1)
+                    beg, end = 12 * icol, 12 * (icol + 1)
                     yield float(line[beg:end])
 
     def parse_crd_iter(self, file, natom):
@@ -455,7 +468,7 @@ class RestartParser:
         # parse the info of periodic boudary condition
         try:
             line = file.next()
-            p1, p2, p3 = line[0:12],  line[12:24], line[24:36]
+            p1, p2, p3 = line[0:12], line[12:24], line[24:36]
             p4, p5, p6 = line[36:48], line[48:60], line[60:72]
             pbc = [float(p) for p in [p1, p2, p3, p4, p5, p6]]
         except StopIteration:
@@ -466,10 +479,11 @@ class RestartParser:
 
 class TrajectoryWriterBase:
 
-    suffix = ''
+    suffix = ""
 
-    def __init__(self, filepath, fst_lst_int=(1,-1,1),
-            use_pbc=False,rotate=1,compress=0):
+    def __init__(
+        self, filepath, fst_lst_int=(1, -1, 1), use_pbc=False, rotate=1, compress=0
+    ):
         self.__fp = filepath
         self.__rotate = rotate
         self.__fst_lst_int = fst_lst_int
@@ -487,7 +501,7 @@ class TrajectoryWriterBase:
 
     def open(self):
         fp = self.get_fp()
-        self.__file = open(fp, 'wb')
+        self.__file = open(fp, "wb")
         return self.__file
 
     def write(self, ifrm, snap, time, box):
@@ -507,10 +521,13 @@ class TrajectoryWriterBase:
     def use_pbc(self):
         return self.__use_pbc
 
+
 import lib_trj
+
+
 class AsciiCoordinateWriter(TrajectoryWriterBase):
 
-    suffix = 'mdcrd'
+    suffix = "mdcrd"
 
     def __init__(self, *args, **kwds):
         TrajectoryWriterBase.__init__(self, *args, **kwds)
@@ -519,7 +536,7 @@ class AsciiCoordinateWriter(TrajectoryWriterBase):
     def write_header(self):
         msg = "This trajectory was generated by the CURP."
         file = self.open()
-        file.write(msg+'\n')
+        file.write(msg + "\n")
         file.close()
 
     def write(self, ifrm, crd, time=None, box=None):
@@ -531,7 +548,7 @@ class AsciiCoordinateWriter(TrajectoryWriterBase):
 
 class AsciiVelocityWriter(TrajectoryWriterBase):
 
-    suffix = 'mdvel'
+    suffix = "mdvel"
     scale_factor = 10.0**3 / 20.455
 
     def __init__(self, *args, **kwds):
@@ -541,7 +558,7 @@ class AsciiVelocityWriter(TrajectoryWriterBase):
     def write_header(self):
         msg = "This trajectory was generated by the CURP."
         file = self.open()
-        file.write(msg+'\n')
+        file.write(msg + "\n")
         file.close()
 
     def write(self, ifrm, vel, time=None, box=None):
@@ -550,65 +567,70 @@ class AsciiVelocityWriter(TrajectoryWriterBase):
         # write next velocity
         # convert curp unit into amber unit for velocity
         c = self.scale_factor
-        lib_trj.write_trajectory(vel*c, fp)
+        lib_trj.write_trajectory(vel * c, fp)
 
 
 class NetCDFWriterBase(TrajectoryWriterBase):
 
     # Please set these class variables in a inheritant class.
-    suffix   = 'xxx.nc'
-    trj_type = ''
-    units    = ''
+    suffix = "xxx.nc"
+    trj_type = ""
+    units = ""
     ncdf_scale = 1.0
     scale_factor = 1.0
 
     # class variable
-    version  = 1.0
+    version = 1.0
 
     def __init__(self, *args, **kwds):
         self.__ncfile = None
-        self.__ifrm   = 0
+        self.__ifrm = 0
         TrajectoryWriterBase.__init__(self, *args, **kwds)
 
     def setup(self, natom):
         """Setup for NetCDF dataset."""
 
-        ncfile = netcdf.Dataset(self.get_fp(), clobber=True,
-                mode='w', format='NETCDF3_64BIT')
+        ncfile = netcdf.Dataset(
+            self.get_fp(), clobber=True, mode="w", format="NETCDF3_64BIT"
+        )
 
         # set global attributes
-        ncfile.title             = 'netCDF '+self.trj_type +'trajectory'
-        ncfile.application       = 'CURP'
-        ncfile.program           = 'Utility tools in the CURP'
-        ncfile.programVersion    = '0.6'
-        ncfile.Convetsions       = 'AMBER'
+        ncfile.title = "netCDF " + self.trj_type + "trajectory"
+        ncfile.application = "CURP"
+        ncfile.program = "Utility tools in the CURP"
+        ncfile.programVersion = "0.6"
+        ncfile.Convetsions = "AMBER"
         ncfile.ConvetsionVersion = str(self.version)
 
         # create dimensions
-        ncfile.createDimension('frame', None)
-        ncfile.createDimension('spatial', 3)
-        ncfile.createDimension('atom', natom)
-        ncfile.createDimension('cell_spatial', 3)
-        ncfile.createDimension('cell_angular', 3)
+        ncfile.createDimension("frame", None)
+        ncfile.createDimension("spatial", 3)
+        ncfile.createDimension("atom", natom)
+        ncfile.createDimension("cell_spatial", 3)
+        ncfile.createDimension("cell_angular", 3)
         # file.createDimensions('label', ?)
 
         # create variables
-        time = ncfile.createVariable('time', 'f4', ('frame',))
-        time.units = 'picosecond'
+        time = ncfile.createVariable("time", "f4", ("frame",))
+        time.units = "picosecond"
 
-        trj = ncfile.createVariable(self.trj_type, # coordinates or velocities
-                'f4', ('frame', 'atom', 'spatial' ))
+        trj = ncfile.createVariable(
+            self.trj_type,  # coordinates or velocities
+            "f4",
+            ("frame", "atom", "spatial"),
+        )
         trj.units = self.units
         trj.scale_factor = self.ncdf_scale
 
+        cell_lengths = ncfile.createVariable(
+            "cell_lengths", "f8", ("frame", "cell_spatial")
+        )
+        cell_lengths.units = "angstrom"
 
-        cell_lengths = ncfile.createVariable('cell_lengths',
-                'f8', ('frame', 'cell_spatial'))
-        cell_lengths.units = 'angstrom'
-        
-        cell_angles = ncfile.createVariable('cell_angles',
-                'f8', ('frame', 'cell_angular'))
-        cell_angles.units = 'degree'
+        cell_angles = ncfile.createVariable(
+            "cell_angles", "f8", ("frame", "cell_angular")
+        )
+        cell_angles.units = "degree"
 
         # file.createVariable('spatial', 'c')
         # file.variables['spatial'] = 'xyz'
@@ -637,22 +659,22 @@ class NetCDFWriterBase(TrajectoryWriterBase):
         ifrm_1 = self.__ifrm - 1
 
         nc_trj = ncfile.variables[self.trj_type]
-        nc_time = ncfile.variables['time']
+        nc_time = ncfile.variables["time"]
 
-        nc_trj[ifrm_1] = snap[:]/self.scale_factor
+        nc_trj[ifrm_1] = snap[:] / self.scale_factor
         nc_time[ifrm_1] = time
 
-        if isinstance(box,numpy.ndarray): # periodic boundary conditios ##add 17.06.29
-            print('here', box)
-            ncfile.variables['cell_lengths'][ifrm_1] = box
-            ncfile.variables['cell_angles'][ifrm_1]  = box
+        if isinstance(box, numpy.ndarray):  # periodic boundary conditios ##add 17.06.29
+            print("here", box)
+            ncfile.variables["cell_lengths"][ifrm_1] = box
+            ncfile.variables["cell_angles"][ifrm_1] = box
             # make this code right in next version.
 
         self.close()
 
     def open(self):
         if self.__ncfile is None:
-            ncfile = netcdf.Dataset(self.get_fp(), clobber=True, mode='r+')
+            ncfile = netcdf.Dataset(self.get_fp(), clobber=True, mode="r+")
             self.__ncfile = ncfile
 
         return self.__ncfile
@@ -662,13 +684,13 @@ class NetCDFWriterBase(TrajectoryWriterBase):
             self.__ncfile.sync()
             self.__ncfile.close()
             self.__ncfile = None
-        
+
 
 class NetCDFCoordinateWriter(NetCDFWriterBase):
 
-    suffix   = 'crd.nc'
-    trj_type = 'coordinates'
-    units    = 'angstrom'
+    suffix = "crd.nc"
+    trj_type = "coordinates"
+    units = "angstrom"
 
     def __init__(self, *args, **kwds):
         NetCDFWriterBase.__init__(self, *args, **kwds)
@@ -676,11 +698,11 @@ class NetCDFCoordinateWriter(NetCDFWriterBase):
 
 class NetCDFVelocityWriter(NetCDFWriterBase):
 
-    suffix   = 'vel.nc'
-    trj_type = 'velocities'
-    units    = 'angstrom/picosecond'
+    suffix = "vel.nc"
+    trj_type = "velocities"
+    units = "angstrom/picosecond"
     ncdf_scale = 20.455
-    scale_factor = 1.0/10.0**3 # fs => ps
+    scale_factor = 1.0 / 10.0**3  # fs => ps
 
     def __init__(self, *args, **kwds):
         NetCDFWriterBase.__init__(self, *args, **kwds)
@@ -690,22 +712,22 @@ if __name__ == "__main__":
 
     import os
 
-    curp_path = os.environ['CURP_HOME']
-    exapmle_path = prmtop_fn = os.path.join(
-            curp_path,'test','amber-enk-vacuum')
+    curp_path = os.environ["CURP_HOME"]
+    exapmle_path = prmtop_fn = os.path.join(curp_path, "test", "amber-enk-vacuum")
 
-    prmtop_fn = os.path.join(exapmle_path, 'prmtop_fn')
-    crds_fn = os.path.join(exapmle_path, 'sam.nccrd')
-    vels_fn = os.path.join(exapmle_path, 'sam.ncvel')
+    prmtop_fn = os.path.join(exapmle_path, "prmtop_fn")
+    crds_fn = os.path.join(exapmle_path, "sam.nccrd")
+    vels_fn = os.path.join(exapmle_path, "sam.ncvel")
 
     from benchmarker import Benchmarker
+
     with Benchmarker(width=20) as bm:
         # with bm('parse'):
-            # rst_fn = "test/system.rst"
-            # parser = RestartParser(rst_fn, 30661)
-            # crd, vel, pbc = parser.parse()
-            # crd, vel = parser.parse()
-            # print(vel)
+        # rst_fn = "test/system.rst"
+        # parser = RestartParser(rst_fn, 30661)
+        # crd, vel, pbc = parser.parse()
+        # crd, vel = parser.parse()
+        # print(vel)
         # with bm('print'):
         #     crd, vel
         #     print()
@@ -733,21 +755,21 @@ if __name__ == "__main__":
         #             print('{:>5} x 10^2: size = {:>5}'.format(
         #                 i/100, len(crd)))
         #     print(i)
-                    
+
         # with bm('crd+pbc'):
-            # print()
-            # parser = CoordinateParser('test/ala3-woct.mdcrd.gz',
-                    # 5844, use_pbc=True)
-            # i = 0
-            # for crd, box in parser:
-                # i += 1
-                # if i%100==0:
-                    # print('{:>5} x 10^2: size = {:>5}'.format(
-                        # i/100, len(crd)))
+        # print()
+        # parser = CoordinateParser('test/ala3-woct.mdcrd.gz',
+        # 5844, use_pbc=True)
+        # i = 0
+        # for crd, box in parser:
+        # i += 1
+        # if i%100==0:
+        # print('{:>5} x 10^2: size = {:>5}'.format(
+        # i/100, len(crd)))
 
-            # print(i)
+        # print(i)
 
-        with bm('NetCDF'):
+        with bm("NetCDF"):
             crd_trj = NetCDFCoordinateReader(crds_fn)
             for crd, pbc in crd_trj:
                 crd
@@ -757,4 +779,3 @@ if __name__ == "__main__":
             for vel, pbc in vel_trj:
                 vel
                 # print(vel/scale_factor) # A/fs => A/(ps/20.455)
-

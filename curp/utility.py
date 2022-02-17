@@ -1,4 +1,3 @@
-
 # import numpy
 # class DimensionError(Exception): pass
 # class RangeError(Exception): pass
@@ -35,9 +34,10 @@
 
 import numpy
 
+
 def tensor(xs, ys):
     axes_x = xs.shape
-    axes_y = ys.shape 
+    axes_y = ys.shape
 
     if axes_x != axes_y:
         print(axes_x, axes_y)
@@ -62,17 +62,19 @@ def tensor(xs, ys):
 
     return result
 
+
 def tensor1(x, y):
-    result = numpy.zeros([3,3])
+    result = numpy.zeros([3, 3])
     for i in range(3):
         for j in range(3):
             result[i, j] = x[i] * y[j]
 
     return result
 
+
 def tensor2(xs, ys):
     axes_x = xs.shape
-    axes_y = ys.shape 
+    axes_y = ys.shape
 
     if axes_x != axes_y:
         raise ValueError
@@ -80,7 +82,7 @@ def tensor2(xs, ys):
     dim0 = axes_x[-1]
     if len(axes_x) == 2:
         result = numpy.zeros([axes_x[0], dim0, dim0])
-        for n, (x, y) in enumerate(zip(xs,ys)):
+        for n, (x, y) in enumerate(zip(xs, ys)):
             for i in range(dim0):
                 for j in range(dim0):
                     result[n, i, j] = x[i] * y[j]
@@ -89,41 +91,45 @@ def tensor2(xs, ys):
 
 
 def time_tensor(natom=10**5):
-    xs = numpy.ones([natom,3])
-    ys = numpy.ones([natom,3])
+    xs = numpy.ones([natom, 3])
+    ys = numpy.ones([natom, 3])
 
     from benchmarker import Benchmarker
+
     with Benchmarker(width=20) as bm:
 
-        with bm('tensor'):
+        with bm("tensor"):
             result = tensor2(xs, ys)
 
-        with bm('tensor 1'):
-            result = numpy.zeros([natom,3,3])
-            for i,(x, y) in enumerate(zip(xs, ys)):
-                result[i] = tensor1(x,y)
+        with bm("tensor 1"):
+            result = numpy.zeros([natom, 3, 3])
+            for i, (x, y) in enumerate(zip(xs, ys)):
+                result[i] = tensor1(x, y)
             # print(result)
 
-        with bm('tensor2'):
+        with bm("tensor2"):
             result = tensor3(xs, ys)
 
+
 def time_tensor2(natom=10**5):
-    xs = numpy.ones([100, natom,3])
-    ys = numpy.ones([100, natom,3])
+    xs = numpy.ones([100, natom, 3])
+    ys = numpy.ones([100, natom, 3])
     # xs = numpy.array([1,2,3])
     # ys = numpy.array([4,5,6])
 
     from benchmarker import Benchmarker
+
     with Benchmarker(width=10) as bm:
-        with bm('tensor'):
+        with bm("tensor"):
             result = tensor(xs, ys)
 
-        with bm('dot product'):
+        with bm("dot product"):
             aa = numpy.arange(10**5)
             bb = numpy.arange(10**5)
             aabb = numpy.dot(aa, bb)
         print(result)
         print(aabb)
+
 
 # def tensor(xs, ys):
 #     result = numpy.zeros(xs.shape)
@@ -131,7 +137,10 @@ def time_tensor2(natom=10**5):
 #          = x[0]*y[0], x[0]*y[1], x[0]*y[2]
 
 # from scipy import sparse
-class InvalidShapeError: pass
+class InvalidShapeError:
+    pass
+
+
 class TBFMatrix_Old:
     """
     The old class for two-body force
@@ -152,7 +161,7 @@ class TBFMatrix_Old:
         self.zs[index] = value[2]
 
     def __getitem__(self, index):
-        return numpy.array([self.xs[index],self.ys[index],self.zs[index]])
+        return numpy.array([self.xs[index], self.ys[index], self.zs[index]])
 
     def __add__(self, other):
         if self.__shape != other.get_shape():
@@ -194,18 +203,18 @@ class TBFMatrix_Old:
     def items(self):
         ilist, jlist = self.xs.nonzero()
         for i, j in zip(ilist, jlist):
-            yield i, j, numpy.array([
-                self.xs[i,j], self.ys[i,j], self.zs[i,j] ])
+            yield i, j, numpy.array([self.xs[i, j], self.ys[i, j], self.zs[i, j]])
 
     def __repr__(self):
-        mes = ( '[{i},{j}] = {value}'.format(i=i,j=j,value=str(ary))
-                for i, j, ary in self.items() )
+        mes = (
+            "[{i},{j}] = {value}".format(i=i, j=j, value=str(ary))
+            for i, j, ary in self.items()
+        )
 
-        return '\n'.join(mes)
+        return "\n".join(mes)
 
 
 class TBFMatrix(dict):
-
     def __init__(self, shape):
         dict.__init__(self)
         self.__shape = shape
@@ -231,8 +240,11 @@ class TBFMatrix(dict):
 
 
 import functools
+
+
 def timeit(fun):
     import time
+
     @functools.wraps(fun)
     def wrapped(*args, **kwargs):
         t0 = time.time()
@@ -240,10 +252,11 @@ def timeit(fun):
         t1 = time.time()
         print("{0} : {1}").format(fn.__name__, t1 - t0)
         return result
+
     return wrapped
 
-class TimeStore:
 
+class TimeStore:
     def __init__(self):
         self.__tag_to_times = {}
         self.__tags = []
@@ -260,5 +273,5 @@ class TimeStore:
             yield tag, self.__tag_to_times[tag]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     time_tensor2()

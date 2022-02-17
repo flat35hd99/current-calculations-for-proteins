@@ -2,20 +2,22 @@
 from __future__ import print_function
 import sys, os
 
-class LabelConverterParser:
 
+class LabelConverterParser:
     def __init__(self, filename):
         self.parse(filename)
 
     def parse(self, filename):
-        file = open(filename, 'rb')
+        file = open(filename, "rb")
         label_to_newlabel = {}
         for line in file:
             line = line.strip()
-            if not line: continue
-            if line.startswith('#'): continue
+            if not line:
+                continue
+            if line.startswith("#"):
+                continue
 
-            key, newlabel = line.split(':')
+            key, newlabel = line.split(":")
             label_to_newlabel[key.strip()] = newlabel.strip()
 
         self.__label_to_newlabel = label_to_newlabel
@@ -25,9 +27,9 @@ class LabelConverterParser:
         return self.__label_to_newlabel
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    ec_file  = sys.stdin
+    ec_file = sys.stdin
     label_fp = sys.argv[1]
 
     if not os.path.exists(label_fp):
@@ -40,9 +42,10 @@ if __name__ == '__main__':
 
     for line in ec_file:
         line = line.strip()
-        if not line: continue
+        if not line:
+            continue
 
-        if line.startswith('#'):
+        if line.startswith("#"):
             print(line.strip())
             continue
 
@@ -50,9 +53,11 @@ if __name__ == '__main__':
         don_line, acc_line, rest = cols[0], cols[1], cols[2:]
 
         don_line_ = label_to_newlabel.get(don_line)
-        if don_line_: don_line = don_line_
+        if don_line_:
+            don_line = don_line_
 
         acc_line_ = label_to_newlabel.get(acc_line)
-        if acc_line_: acc_line = acc_line_
+        if acc_line_:
+            acc_line = acc_line_
 
-        print(don_line, acc_line, ' '.join(rest))
+        print(don_line, acc_line, " ".join(rest))

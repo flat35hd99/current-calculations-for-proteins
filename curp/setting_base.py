@@ -17,21 +17,41 @@ import glob
 
 from exception import CurpException
 
-class SectionNotDefined(CurpException): pass
-class InvalidKeyword(CurpException): pass
-class InvalidType(CurpException): pass
-class InvalidValue(CurpException): pass
-class KeywordNotFound(CurpException): pass
-class ValueCanNotConvert(CurpException): pass
-class FileNotFound(CurpException): pass
+
+class SectionNotDefined(CurpException):
+    pass
+
+
+class InvalidKeyword(CurpException):
+    pass
+
+
+class InvalidType(CurpException):
+    pass
+
+
+class InvalidValue(CurpException):
+    pass
+
+
+class KeywordNotFound(CurpException):
+    pass
+
+
+class ValueCanNotConvert(CurpException):
+    pass
+
+
+class FileNotFound(CurpException):
+    pass
+
 
 ################################################################################
 class SettingBase:
-
     def __init__(self, config, check=True):
 
         # initialize each of sections.
-        secnames = [ aname for aname in dir(self) if not aname.startswith('_') ]
+        secnames = [aname for aname in dir(self) if not aname.startswith("_")]
         for sname in secnames:
             self[sname].set_name(sname)
 
@@ -45,29 +65,24 @@ class SettingBase:
             pairs = config.items(secname)
             section.set_items(dict(pairs), check)
 
-
     def __getitem__(self, attrname):
         return getattr(self, attrname)
 
     def __str__(self):
-        secnames = [ aname for aname in dir(self)
-                if not aname.startswith('_') ]
-        return "\n\n".join( str(self[sname]) for sname in secnames )
+        secnames = [aname for aname in dir(self) if not aname.startswith("_")]
+        return "\n\n".join(str(self[sname]) for sname in secnames)
 
     def __format__(self, fmt_type="rst"):
         if fmt_type == "rst":
-            secnames = [ aname for aname in dir(self)
-                    if not aname.startswith('_') ]
-            return "\n\n".join( format(self[sname], fmt_type)
-                    for sname in secnames )
+            secnames = [aname for aname in dir(self) if not aname.startswith("_")]
+            return "\n\n".join(format(self[sname], fmt_type) for sname in secnames)
         else:
             return ""
 
 
 ################################################################################
 class Section:
-
-    def __init__(self, description='', **kwds):
+    def __init__(self, description="", **kwds):
         self.__desc = description
         self.__key_to_typeobj = kwds
         self.__name = None
@@ -76,31 +91,33 @@ class Section:
             type_obj.set_name(key)
 
     def __str__(self):
-        seclines = "[{sname}]\n\t{desc}\n\n".format(
-                sname=self.__name, desc=self.__desc)
+        seclines = "[{sname}]\n\t{desc}\n\n".format(sname=self.__name, desc=self.__desc)
 
-        return seclines + "\n\n".join(str(typeobj)
-                for typeobj in self.__key_to_typeobj.values())
+        return seclines + "\n\n".join(
+            str(typeobj) for typeobj in self.__key_to_typeobj.values()
+        )
 
     def __format__(self, fmt_type="rst"):
         if fmt_type == "rst":
             seclines = "{sname} section\n{secline}\n{desc}\n\n".format(
-                    sname=self.__name, secline=(8+len(self.__name))*'~',
-                    desc=self.__desc)
+                sname=self.__name,
+                secline=(8 + len(self.__name)) * "~",
+                desc=self.__desc,
+            )
 
-            return seclines + "\n\n".join(format(typeobj, fmt_type)
-                    for typeobj in self.__key_to_typeobj.values())
+            return seclines + "\n\n".join(
+                format(typeobj, fmt_type) for typeobj in self.__key_to_typeobj.values()
+            )
         else:
             return ""
 
         # return '\n\n'.join( ("{sname}\n{secline}\n{desc}\n\n{kwds}"
-                # .format(sname=sname, secline=len(sname)*'~',
-                    # desc=kwds['description'], kwds=kwds)
-                # for sname, kwds in name_to_secstrs.items() ) )
-
+        # .format(sname=sname, secline=len(sname)*'~',
+        # desc=kwds['description'], kwds=kwds)
+        # for sname, kwds in name_to_secstrs.items() ) )
 
         # for key, type_obj in self.__key_to_typeobj.items():
-            # lines.append( '{key}\n {value}'.format(key=key,value=type_obj) )
+        # lines.append( '{key}\n {value}'.format(key=key,value=type_obj) )
         # return '\n'.join(lines)
 
     def set_name(self, name):
@@ -123,16 +140,16 @@ class Section:
                 type_obj.set(value)
             except FileNotFound:
                 if check:
-                    mes = 'key : {}, value : {}'.format(key, value)
+                    mes = "key : {}, value : {}".format(key, value)
                     raise FileNotFound(mes)
                 else:
                     continue
 
             except InvalidValue:
-                mes = 'key : {}, value : {}'.format(key, value)
+                mes = "key : {}, value : {}".format(key, value)
                 raise InvalidValue(mes)
             except ValueCanNotConvert:
-                mes = 'key : {}, value : {}'.format(key, value)
+                mes = "key : {}, value : {}".format(key, value)
                 raise ValueCanNotConvert(mes)
 
     def check_invalid(self, key):
@@ -149,6 +166,7 @@ class Section:
 
     def copy(self, **new_kwds):
         import copy
+
         old_kwds = copy.deepcopy(self.__key_to_typeobj)
         old_kwds.update(new_kwds)
         return Section(**old_kwds)
@@ -175,11 +193,13 @@ class Section:
 
 ################################################################################
 from abc import ABCMeta, abstractmethod, abstractproperty
+
+
 class TypeBase:
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, default, require, desc='', parser=None):
+    def __init__(self, default, require, desc="", parser=None):
         self.__desc = desc
         self.__require = require
         self.__parser = parser
@@ -197,8 +217,11 @@ class TypeBase:
 
     def __str__(self):
         return "{key} = {value} # {typename}; {desc}".format(
-                key=self.__name, value=self._get_value(),
-                typename=self.typename, desc=self.__desc)
+            key=self.__name,
+            value=self._get_value(),
+            typename=self.typename,
+            desc=self.__desc,
+        )
 
     def __format__(self, fmt_type="rst"):
         if fmt_type == "rst":
@@ -212,9 +235,10 @@ class TypeBase:
                 val = self._get_value()
 
             key_val_lines = (
-                    "\n**{key} = {value}** (default) : {typename}\n\n"
-                    + "    {desc}").format( key=self.__name, value=val,
-                            typename=self.typename, desc=self.__desc)
+                "\n**{key} = {value}** (default) : {typename}\n\n" + "    {desc}"
+            ).format(
+                key=self.__name, value=val, typename=self.typename, desc=self.__desc
+            )
 
         else:
             key_val_lines = ""
@@ -284,12 +308,12 @@ class TypeBase:
 
 ################################################################################
 class Int(TypeBase):
-
-    def __init__(self, default, require=True, desc='', parser=None):
+    def __init__(self, default, require=True, desc="", parser=None):
         TypeBase.__init__(self, default, require, desc, parser)
 
     @property
-    def typename(self): return self.__class__.__name__
+    def typename(self):
+        return self.__class__.__name__
 
     def check_default(self, value):
         return isinstance(value, int)
@@ -311,12 +335,12 @@ class Int(TypeBase):
 
 
 class Float(TypeBase):
-
-    def __init__(self, default, require=True, desc='', parser=None):
+    def __init__(self, default, require=True, desc="", parser=None):
         TypeBase.__init__(self, default, require, desc, parser)
 
     @property
-    def typename(self): return self.__class__.__name__
+    def typename(self):
+        return self.__class__.__name__
 
     def check_default(self, value):
         return isinstance(value, float)
@@ -338,12 +362,12 @@ class Float(TypeBase):
 
 
 class String(TypeBase):
-
-    def __init__(self, default, require=True, desc='', parser=None):
+    def __init__(self, default, require=True, desc="", parser=None):
         TypeBase.__init__(self, default, require, desc, parser)
 
     @property
-    def typename(self): return self.__class__.__name__
+    def typename(self):
+        return self.__class__.__name__
 
     def check_default(self, value):
         return self.check(value)
@@ -362,14 +386,15 @@ class String(TypeBase):
 
 class Bool(TypeBase):
 
-    _trues  = ['true','True','TRUE','yes','Yes','YES','on','On','ON']
-    _falses = ['false','False','FALSE','no','No','NO','off','Off','OFF']
+    _trues = ["true", "True", "TRUE", "yes", "Yes", "YES", "on", "On", "ON"]
+    _falses = ["false", "False", "FALSE", "no", "No", "NO", "off", "Off", "OFF"]
 
-    def __init__(self, default, require=True, desc='', parser=None):
+    def __init__(self, default, require=True, desc="", parser=None):
         TypeBase.__init__(self, default, require, desc, parser)
 
     @property
-    def typename(self): return self.__class__.__name__
+    def typename(self):
+        return self.__class__.__name__
 
     def check_default(self, value):
         return isinstance(value, bool)
@@ -379,34 +404,37 @@ class Bool(TypeBase):
 
     @classmethod
     def check(cls, raw_value):
-        if raw_value in cls._trues:  return True
-        if raw_value in cls._falses: return True
+        if raw_value in cls._trues:
+            return True
+        if raw_value in cls._falses:
+            return True
         return False
 
     @classmethod
     def convert(cls, raw_value):
-        if raw_value in cls._trues:  return True
-        if raw_value in cls._falses: return False
+        if raw_value in cls._trues:
+            return True
+        if raw_value in cls._falses:
+            return False
 
 
 class Choice(TypeBase):
-
-    def __init__(self, default, values, value_type, require=True,
-            desc='', parser=None):
+    def __init__(self, default, values, value_type, require=True, desc="", parser=None):
         self.__Type = value_type
 
         # store given values
         if len(values) == 0:
             raise ValueCanNotConvert(values)
-        self.__values = [ self.__Type( self.__Type.convert(raw_value) )
-                          for raw_value in values ]
+        self.__values = [
+            self.__Type(self.__Type.convert(raw_value)) for raw_value in values
+        ]
 
         TypeBase.__init__(self, default, require, desc, parser)
 
     @property
     def typename(self):
-        choice_str = '|'.join( [v.get() for v in self.__values] )
-        return "Choice[{values}]".format(values = choice_str)
+        choice_str = "|".join([v.get() for v in self.__values])
+        return "Choice[{values}]".format(values=choice_str)
 
     def get(self):
         return TypeBase.get(self).get()
@@ -418,19 +446,18 @@ class Choice(TypeBase):
         return self.convert(value)
 
     def check(self, raw_value):
-        return self.__Type( self.__Type.convert( raw_value) ) in self.__values
+        return self.__Type(self.__Type.convert(raw_value)) in self.__values
         # if value in [v.get() for v in self.__values]:
         #     return True
         # else:
         #     return False
 
     def convert(self, raw_value):
-        return self.__Type( self.__Type.convert(raw_value) )
+        return self.__Type(self.__Type.convert(raw_value))
 
 
 class List(TypeBase):
-
-    def __init__(self, default, value_type, require=True, desc='', parser=None):
+    def __init__(self, default, value_type, require=True, desc="", parser=None):
         self.__Type = value_type
         self.__parsed_value = None
         TypeBase.__init__(self, default, require, desc, parser)
@@ -460,27 +487,36 @@ class List(TypeBase):
             return False
 
     def convert_default(self, value):
-        return [ self.__Type(v) for v in value ]
+        return [self.__Type(v) for v in value]
 
     def check(self, value):
-        for rv in value.split(' '):
+        for rv in value.split(" "):
             if not self.__Type.check(rv):
                 return False
         else:
             return True
 
     def convert(self, values_str):
-        return [ self.__Type( self.__Type.convert(raw_value) )
-                 for raw_value in values_str.split(' ') if raw_value != '']
+        return [
+            self.__Type(self.__Type.convert(raw_value))
+            for raw_value in values_str.split(" ")
+            if raw_value != ""
+        ]
 
     def _get_value(self):
-        return '  '.join(str(v) for v in self.get())
+        return "  ".join(str(v) for v in self.get())
 
 
 class File(TypeBase):
-
-    def __init__(self, default='', require=True, desc='',
-            allow_glob=True, exists=False, parser=None):
+    def __init__(
+        self,
+        default="",
+        require=True,
+        desc="",
+        allow_glob=True,
+        exists=False,
+        parser=None,
+    ):
         # self._set_defaults(default)
         self.__use_glob = allow_glob
         self.__exists = exists
@@ -491,7 +527,7 @@ class File(TypeBase):
         return "File"
 
     def _set_defaults(self, default):
-        if default == '':
+        if default == "":
             self.__filenames = []
         else:
             self.set(default)
@@ -521,10 +557,10 @@ class File(TypeBase):
             return files
 
     def check(self, value):
-        if value == '':
+        if value == "":
             return False
 
-        for path in value.split(' '):
+        for path in value.split(" "):
             if self.__use_glob:
                 for fn in sorted(glob.glob(path)):
                     abs_fn = os.path.abspath(fn)
@@ -549,7 +585,7 @@ class File(TypeBase):
                 files.append(os.path.abspath(path))
 
         else:
-            for path in value.split(' '):
+            for path in value.split(" "):
                 if self.__use_glob:
                     for fn in sorted(glob.glob(path)):
                         files.append(os.path.abspath(fn))
@@ -558,12 +594,11 @@ class File(TypeBase):
         return files
 
     def _get_value(self):
-        return '  '.join(v for v in self.get())
+        return "  ".join(v for v in self.get())
 
 
 ################################################################################
 def test_main():
-
     def parse(xs):
         ys = []
         for x in xs:
@@ -572,58 +607,29 @@ def test_main():
         return ys
 
     generic = Section(
-        int_test = Int(
-            desc = '',
-            parser = lambda x: x+10,
-            default = 5 ),
-
-        float_test = Float(
-            desc = '',
-            default = 5.5 ),
-
-        string_test = String(
-            desc = '',
-            default = 'hoge' ),
-
-        format = Choice(
-            desc = '',
-            values = ['presto', 'amber'],
-            value_type = String,
-            default = 'presto' ),
-
-        crd = List(
-            desc = '',
-            value_type = Int,
-            default = [1,2,3] ),
-
-        crd_power = List(
-            desc = '',
-            value_type = Int,
-            parser = parse,
-            default = [1,2,3] ),
-
-        target = Choice(
-            desc = '',
-            values = ['trajectory', 'restart'],
-            value_type = String,
-            default = 'restart' ),
-
-        bool_test = Bool(
-            desc = '',
-            default = True),
-
-        file_test = File(exists=False,
-            desc = '',
-            default = 'flux.dat')
-
-        )
+        int_test=Int(desc="", parser=lambda x: x + 10, default=5),
+        float_test=Float(desc="", default=5.5),
+        string_test=String(desc="", default="hoge"),
+        format=Choice(
+            desc="", values=["presto", "amber"], value_type=String, default="presto"
+        ),
+        crd=List(desc="", value_type=Int, default=[1, 2, 3]),
+        crd_power=List(desc="", value_type=Int, parser=parse, default=[1, 2, 3]),
+        target=Choice(
+            desc="",
+            values=["trajectory", "restart"],
+            value_type=String,
+            default="restart",
+        ),
+        bool_test=Bool(desc="", default=True),
+        file_test=File(exists=False, desc="", default="flux.dat"),
+    )
 
     # print(str(generic))
     # print(generic['format'])
 
-    generic.set_items(dict(float_test=0, file_test='run.ini *g.py'),check=False)
+    generic.set_items(dict(float_test=0, file_test="run.ini *g.py"), check=False)
     print(str(generic))
-
 
     # print(generic.format)
     # print(generic.int_test)
@@ -632,5 +638,6 @@ def test_main():
     # print(generic.string_test)
     # print(generic.file_test)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_main()

@@ -7,13 +7,13 @@ import numpy
 
 class TensorParser:
 
-    section_end = '%end'
+    section_end = "%end"
 
     def __init__(self, filename):
         self.__filename = filename
 
     def parse(self):
-        with open(self.__filename, 'rb') as file:
+        with open(self.__filename, "rb") as file:
             names, tensors = self.parse_content(file)
         return names, tensors
 
@@ -24,13 +24,14 @@ class TensorParser:
         gen_lines = self.gen_optimized_lines(file)
         sections = []
         for line in gen_lines:
-            if not self.is_section(line): continue
+            if not self.is_section(line):
+                continue
 
             flagname = line[1:].strip()
-            if flagname == 'data':
-                lines = list( self.gen_section_lines(gen_lines) )
+            if flagname == "data":
+                lines = list(self.gen_section_lines(gen_lines))
                 names, tensor = self.parse_data(lines)
-                tensors.append( tensor )
+                tensors.append(tensor)
 
         return names, tensors
 
@@ -41,9 +42,7 @@ class TensorParser:
             cols = line.split()
             names.append(cols[0])
             v = [float(c) for c in cols[1:]]
-            tensor = [ [v[0], v[1], v[2]],
-                       [v[3], v[4], v[5]],
-                       [v[6], v[7], v[8]] ]
+            tensor = [[v[0], v[1], v[2]], [v[3], v[4], v[5]], [v[6], v[7], v[8]]]
             tensors.append(tensor)
 
         # array = numpy.array(v)
@@ -70,13 +69,13 @@ class TensorParser:
     def split_content(self, gen):
         lines = []
         for line in gen:
-            if line.startswith('%'):
+            if line.startswith("%"):
                 pass
 
     def is_section(self, line):
         if line == self.section_end:
             return False
-        elif line.startswith('%'):
+        elif line.startswith("%"):
             return True
         else:
             return False
@@ -94,13 +93,14 @@ def split_data(data, interval=100):
 
     splitted_data = []
     num_data = len(data)
-    num_intvls = num_data/interval
+    num_intvls = num_data / interval
 
     for nint in range(num_intvls):
-        split_data.append( data[nint*interval:(nint+1)*interval] )
+        split_data.append(data[nint * interval : (nint + 1) * interval])
 
     # The remains of data are thrown away.
     return splitted_data
+
 
 def cal_average_with_scalar(values_traj):
 
@@ -114,6 +114,7 @@ def cal_average_with_scalar(values_traj):
 
     return sum_values / ntraj
 
+
 def cal_average_with_tensor(tensors):
 
     sum_tensor = numpy.zeros(tensors[0].shape)
@@ -122,7 +123,8 @@ def cal_average_with_tensor(tensors):
         sum_tensor += t
 
     nten = len(tensors)
-    return sum_tensor/nten
+    return sum_tensor / nten
+
 
 def cal_rmsf(tensors, average_tensor):
 
@@ -136,35 +138,39 @@ def cal_rmsf(tensors, average_tensor):
 
     return numpy.sqrt(rmsf_tensor) / nten
 
+
 def gen_eigens(tensors):
     """Generate the calculated eigen values for each tonsor."""
     # diagonal
     for tensor in tensors:
         eigen, vec = numpy.linalg.eig(tensor)
         try:
-            val = math.sqrt(eigen[0]**2 + eigen[1]**2 + eigen[2]**2)
+            val = math.sqrt(eigen[0] ** 2 + eigen[1] ** 2 + eigen[2] ** 2)
             yield val
         except ValueError:
             print(eigen)
 
+
 def get_average_after_eigen(tensors_traj):
     evalues = []
     for itraj, tensors in enumerate(tensors_traj):
-        evalues.append( numpy.array(list(gen_eigens(tensors))) )
+        evalues.append(numpy.array(list(gen_eigens(tensors))))
     return cal_average_with_scalar(evalues)
+
 
 def get_eigen_after_average(tensors_traj):
     average_tensors = cal_average_with_tensor(tensors_traj)
     return list(gen_eigens(average_tensors))
 
-def simplify_tensor(filename, fns, labels='', snapshot=False, **kwds):
+
+def simplify_tensor(filename, fns, labels="", snapshot=False, **kwds):
     """Show and make figure for stress ratio."""
 
     if len(fns) == 0:
         pass
 
-    elif len(labels.split(',')) != len(fns):
-        print(labels.split(','))
+    elif len(labels.split(",")) != len(fns):
+        print(labels.split(","))
         print(fns)
         print("The number of labels and filenames must be same.")
         quit()
@@ -179,44 +185,46 @@ def simplify_tensor(filename, fns, labels='', snapshot=False, **kwds):
 
     # for the stress tensor for each component
     evalues_list = []
-    labels = [label.strip() for label in labels.split(',') ]
+    labels = [label.strip() for label in labels.split(",")]
     for label, fn in zip(labels, fns):
         parser = TensorParser(fn)
         names, data = parser.parse()
         if snapshot:
-            evalues_list.append( get_average_after_eigen(data) )
+            evalues_list.append(get_average_after_eigen(data))
         else:
-            evalues_list.append( get_eigen_after_average(data) )
+            evalues_list.append(get_eigen_after_average(data))
 
     # output the eigen value of stress tensor
     if len(evalues_list) == 0:
-        header = '{id:9s}  {name:>4s} {total:>12s}'.format(
-                id='#label id', name='name', total='total')
+        header = "{id:9s}  {name:>4s} {total:>12s}".format(
+            id="#label id", name="name", total="total"
+        )
         print(header)
-        fmt = '{id:>9d}  {name:<4s} {total:12.7f}'
+        fmt = "{id:>9d}  {name:<4s} {total:12.7f}"
 
         for name, tot_evalue in zip(names, avetot_evalues):
 
             # name
-            atom_id, aname = name.split('_')
+            atom_id, aname = name.split("_")
 
             # output one line data
             print(fmt.format(id=int(atom_id), name=aname, total=tot_evalue))
 
     else:
-        header = '{id:9s}  {name:>4s} {total:>12s}'.format(
-                id='#label id', name='name', total='total') + ' '.join(
-                        '{:>10s}'.format(label) for label in labels)
+        header = "{id:9s}  {name:>4s} {total:>12s}".format(
+            id="#label id", name="name", total="total"
+        ) + " ".join("{:>10s}".format(label) for label in labels)
         print(header)
-        fmt = '{id:>9}  {name:<4s} {total:12.7f}' + ' '.join(
-                '{'+label+':10.2f}' for label in labels)
+        fmt = "{id:>9}  {name:<4s} {total:12.7f}" + " ".join(
+            "{" + label + ":10.2f}" for label in labels
+        )
 
         for tuples in zip(names, avetot_evalues, *evalues_list):
 
             name, tot, others = tuples[0], tuples[1], tuples[2:]
 
             # name
-            atom_id, aname = name.split('_')
+            atom_id, aname = name.split("_")
 
             # each evalue
             if not isinstance(others, tuple):
@@ -224,11 +232,10 @@ def simplify_tensor(filename, fns, labels='', snapshot=False, **kwds):
             label_to_evalues = dict(zip(labels, others))
 
             # output one line data
-            print(fmt.format(id=atom_id, name=aname,
-                total=tot, **label_to_evalues))
+            print(fmt.format(id=atom_id, name=aname, total=tot, **label_to_evalues))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from curp.console import arg_simplify, exec_command
 
     parser = arg_simplify()
