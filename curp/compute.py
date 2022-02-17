@@ -8,6 +8,7 @@ and the tutorial directory for more informations.)
 """
 
 from __future__ import print_function
+from json.tool import main
 
 # Standard module
 import sys
@@ -174,6 +175,7 @@ def gen_tables(inttable):
     interact_table = list(
         inttable.gen_divided_table()
     )  # ここのdivideはいったん無視。interaction tableが悪いと仮定する。
+    # たしかに怪しいが、こちらも怪しい。
     memories = inttable.get_table_memories()
 
     # Output interact_table.
@@ -252,9 +254,17 @@ def init_current(setting, par):
     if setting.curp.group_pair_file[0]:
         from curp.table import group_pair
 
+        # 実はこのparserを呼んだ時点でパースされる。草
+        # 中身はini parser.言われてみれば確かにフォーマット一緒だね。
+        # 各グループの名前をセクション(大かっこ"[", "]")で表し、その下のものを配列として取得してる。
         gpair_parser = group_pair.GroupPairParser(
             setting.curp.group_pair_file[0], gnames
         )
+        # gpair_tableの構造（予想）
+        # [
+        #     [source_group_name, target_group_name],
+        #     [source_group_name, target_group_name],
+        # ]
         gpair_table = gpair_parser.get_gpair_table()
     else:
         gpair_table = None
@@ -281,6 +291,9 @@ def init_current(setting, par):
 
     # Make table for group pair.
     if gpair_table:
+        # gpair_tableがグループのペア
+        # gname_iatoms_pairsが各グループに所属する原子
+        # natomはprmtopに記録された全体の原子数。
         gp = group_pair.GroupPair(gpair_table, gname_iatoms_pairs, natom)
         inttable = gp.get_inttable_with_gpair(inttable)
 

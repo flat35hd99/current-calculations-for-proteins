@@ -20,7 +20,10 @@ class ParserError(exception.CurpException):
 
 
 def get_group_iatoms_pairs(setting, target_atoms, res_info, atom_info):
-    """Get group atoms table with reference to setting."""
+    """Get group atoms table with reference to setting.
+    グループの名前(番号_名前)とそれに所属する原子番号をペアにしたものを返す。
+    (str group_name, int[] atoms_belong)の配列を返す。
+    """
 
     method = setting.curp.group_method
 

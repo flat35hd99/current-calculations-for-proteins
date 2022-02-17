@@ -50,6 +50,14 @@ class GroupPairParser(ini.IniParser):
                 raise InvalidGroupName(msg)
 
     def get_gpair_table(self):
+        # gen_secname_cols_pairは(source_group_name, target_gropu_name)のiteratorを返す
+        # ここでlist()を通しているので、おそらく
+        # [
+        #     [source_group_name, [target_group_name, target_group_name, target_group_name]],
+        #     [source_group_name, [target_group_name, target_group_name]],
+        # ]
+        # を返してる。
+        # class GroupPair.gen_inttable()の実装から、source_group_nameに重複はなく、ターゲットは配列であることがわかる。
         return list(ini.IniParser.gen_secname_cols_pair(self))
 
 
@@ -64,13 +72,28 @@ class GroupPair:
         """Generate the object equivalent with interaction table
         from group pair table, ex)
         """
+        
+        # {
+        #     "00001_GLU": [1,2,3,4,5,6],
+        #     "00002_LEU": [7,8,9,10],
+        #     ...
+        # }
         gname_to_iatoms = dict(self.__gname_to_iatoms)
-
+        
+        # gpair_tableの構造（予想）
+        # [
+        #     [source_group_name, target_group_name],
+        #     [source_group_name, target_group_name],
+        # ]
+        # ここでこの予想は間違っていることがわかった。GroupPairParser.get_gpair_table()のコメントを確認せよ。
         for gname_i, jgnames in self.__gpair_table:
-
+            
+            # 一つのsource_groupとペアになっているすべてのtarget_groupの原子を取得する。
             jatoms = []
             for gname_j in jgnames:
+                # jatoms.append()
                 jatoms += gname_to_iatoms[gname_j]
+
 
             comp_jatoms = list(gen_compressed_iatms(jatoms))
             for iatm in gname_to_iatoms[gname_i]:
@@ -85,14 +108,19 @@ class GroupPair:
         return self.__table_with_gpair
 
     # そもそも論、base_tableとはなんや。。
+    # →target.pyで生成されるもの。prmtopから読み取ったものから、計算対象となる原子だけを残したもの。
+    # interact_table.pyでの宣言により、__apply()でそのように見える。
     def _make_table_with_gpair(self, base_table):
         """Make interaction table with group pairs."""
 
         table_with_gpair = numpy.array(list(self.gen_inttable()))
+        # ここではじめてfilterが適応されて計算対象だけの原子に変換される。
+        # なぜならself.list()内で__apply()を呼び出してるから。
         base_table = numpy.array(list(base_table))
 
         import lib_group_pair
-
+        # within_gpairはmodule
+        # setupはsubroutine
         lib_gpair = lib_group_pair.within_gpair
         lib_gpair.setup(table_with_gpair, self.__natom)
 
@@ -101,9 +129,9 @@ class GroupPair:
         new_table = new_table[:ntable].tolist()
         return it.InteractionTable(base_table=new_table)
 
-
 def gen_compressed_iatms(iatoms):
-    """Convert: [1,2,3,6,7,8,...,100] => [(1,3),(6,100)]"""
+    """Convert: [1,2,3,6,7,8,...,100] => [(1,3),(6,100)]
+    犯人有力候補バグがあるならここでしょ感ある。もしここでなければ、"""
 
     iatoms.sort()
     iatm_beg = iatoms[0]

@@ -420,6 +420,7 @@ class InteractionTableList:
             if table:
                 yield table
 
+    # gen_divided_table()の実態
     def gen_divided_table_pair(self, mem_limit=None):
         """Generate a table divided to each number of pair."""
 
