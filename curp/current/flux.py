@@ -211,6 +211,12 @@ class HeatFluxCalculator(base.FluxCalculator):
         # calculate current
         t1 = time.time()
         flux_atm, flux_grp = self.fcal.cal_bonded(vel, tbfs, displacement)
+        
+        print("===HeatFluxCalculator.cal_bonded()===")
+        print("displacement shape {}, len {}".format(numpy.shape(displacement), len(displacement)))
+        print("tbfs shape {}, len {}".format(numpy.shape(tbfs), len(tbfs)))
+        print("velocity shape {}, len {}".format(numpy.shape(vel), len(vel)))
+        print("flux shape {}, len {}".format(numpy.shape(flux_grp), len(flux_grp)))
 
         # log the elasped times
         t2 = time.time()
@@ -232,7 +238,14 @@ class HeatFluxCalculator(base.FluxCalculator):
 
         flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table,
                                                       gen_displacement )
-
+        
+        print("===HeatFluxCalculator.cal_coulomb()===")
+        print("table shape {} type {} table".format(numpy.shape(table), type(table), table))
+        print("tbfs shape {}".format(numpy.shape(gen_tbfs)))
+        print("displacement shape {}".format(numpy.shape(gen_displacement)))
+        print("velocity shape {}, len {}".format(numpy.shape(vel), len(vel)))
+        print("flux shape {}, len {}".format(numpy.shape(flux_grp), len(flux_grp)))
+        
         t1 = time.time()
         dt_flux = self.fcal.dt
 
@@ -254,6 +267,13 @@ class HeatFluxCalculator(base.FluxCalculator):
 
         flux_atm, flux_grp = self.fcal.cal_nonbonded( vel, gen_tbfs, table,
                                                       gen_displacement )
+        
+        print("===HeatFluxCalculator.cal_vdw()===")
+        print("table shape {} table".format(numpy.shape(table), table))
+        print("tbfs shape {}".format(numpy.shape(gen_tbfs)))
+        print("displacement shape {}".format(numpy.shape(gen_displacement)))
+        print("velocity shape {}, len {}".format(numpy.shape(vel), len(vel)))
+        print("flux shape {}, len {}".format(numpy.shape(flux_grp), len(flux_grp)))
 
         t1 = time.time()
         dt_flux = self.fcal.dt

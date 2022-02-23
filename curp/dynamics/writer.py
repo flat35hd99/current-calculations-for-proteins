@@ -60,13 +60,15 @@ class Writer:
 
     def write(self, istp, crd=None, vel=None):
         """Write trajectory."""
-
+        
         if self.__crds_writer:
+            print(crd)
             self.__crds_writer.write(istp, crd)
 
             # The box is not implemented in dynamics run.
             #self.__crds_writer.write(istp, crd, box)
 
         if self.__vels_writer:
+            print(vel)
             self.__vels_writer.write(istp, vel)
 

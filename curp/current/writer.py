@@ -515,8 +515,10 @@ class FluxWriter:
     
         to_fluxes_ar = numpy.array(key_to_fluxes)
         if self.__pair_table is None:
+            print("hogehoge")
             lines = self.format(istep, key_to_fluxes, self.__names)
         else:
+            print("fugafuga")
             lines = self.format_by_pairs(
                     istep, key_to_fluxes, self.__names, self.__pair_table)
 

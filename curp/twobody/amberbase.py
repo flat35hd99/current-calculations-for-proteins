@@ -37,6 +37,7 @@ class TwoBodyForceBase:
         return self.__natom
 
     def setup(self, interact_table, check=False):
+        print("TwobodyForceBase setup start")
         self.__interact_table = interact_table
         max_tbf = self.get_maxpair(interact_table)
         self._setup_init(max_tbf, check)
@@ -52,6 +53,7 @@ class TwoBodyForceBase:
         self._setup_vdw()
 
     def cal_force(self, crd):
+        print("TwobodyForceBase cal_force start")
         # initialize
         self.initialize(crd)
 
@@ -63,7 +65,8 @@ class TwoBodyForceBase:
         for t in self.__interact_table:
             self.cal_coulomb(t)
             self.cal_vdw(t)
-
+        print("TwobodyForceBase forces type{}".format(type(self.__forces)))
+        print("TwobodyForceBase forces content\n{}".format(self.__forces))
         return self.__forces
 
     def _setup_init(self, max_tbf, check=False):
@@ -172,6 +175,9 @@ class TwoBodyForceBase:
         mod = getattr(self.__mod, bond_type)
         mod.calculate()
         self.__forces += mod.forces
+        # print(bond_type)
+        # print(len(self.__forces))
+        # print(self.__forces)
 
         # store energy and forces
         self.__ptype_to_energy[bond_type] = mod.energy

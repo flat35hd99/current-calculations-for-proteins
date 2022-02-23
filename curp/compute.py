@@ -14,6 +14,8 @@ import sys
 import os
 import time
 
+import numpy as np
+
 import curp.exception as exception
 import curp.clog as logger
 import curp.setting as st
@@ -279,6 +281,7 @@ def init_current(setting, par):
         gp = group_pair.GroupPair(gpair_table, gname_iatoms_pairs, natom)
         inttable = gp.get_inttable_with_gpair(inttable)
 
+    # Maybe this is hell gate
     interact_table = gen_tables(inttable)
 
     label_time_pairs += [('Interaction table', time.time()-t_0)]
@@ -622,6 +625,11 @@ def curp(input_="run.cfg", use_serial=False, vervose=False, print_only_error=Fal
         if do_run:
             t_0 = time.time()
 
+            # data_iter have inter atom flux dictionary and inter group
+            # flux dictionary.
+            # {'coulomb14': None, 'angle': None, 'vdw': None, 'coulomb': None, 'vdw14': None, 'improper': None, 'total': None, 'bond': None, 'torsion': None}
+            # Each value has the number of groups * the number of groups * dimensions
+            # If your system has 255 group(residue), then 255 * 255 * 3
             ############################################################
             results_iter = par.run(cal.run, data=data_iter)
             ############################################################
@@ -646,7 +654,7 @@ def curp(input_="run.cfg", use_serial=False, vervose=False, print_only_error=Fal
 
         if do_run:
             t_0 = time.time()
-
+            
             ############################################################
             results_iter = cal.run(data_iter.next())
             ############################################################
@@ -671,6 +679,28 @@ def curp(input_="run.cfg", use_serial=False, vervose=False, print_only_error=Fal
                                .format(cur_step))
             if par.is_root():
                 t_write = time.time()
+                print(istep)
+                # print(*results)
+                # for element in results:
+                #     print(type(element))
+                #     print(element)
+                _, group_flux_dict = results
+                for element in ['vdw','coulomb', 'total']:
+                    print(element)
+                    print("shape")
+                    print(np.shape(group_flux_dict[element]))
+                    print("len simple")
+                    print(len(group_flux_dict[element]))
+                    print("len 1")
+                    print(len(group_flux_dict[element][1]))
+                    # Each pair value is residue number in pdb file
+                    # To convert indeces, minus 1
+                    for pair in [(1,9), (71, 104), (73, 74), (73, 75)]:
+                        source, target = pair
+                        source = source - 1
+                        target = target - 1
+                        print("sum of source: {} and target: {}".format(source, target))
+                        print(np.sum(group_flux_dict[element][source][target]))
                 writer.write(istep, *results)
                 logger.debug_cycle('writing at {}: {}'
                                    .format(cur_step, time.time()-t_write))

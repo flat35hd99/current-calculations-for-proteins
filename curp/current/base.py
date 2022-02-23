@@ -186,30 +186,44 @@ class FluxCalculator(CalculatorBase):
         logger.debug_cycle('    calculating flux values at step {} ...'
                 .format(cstep))
 
-        # get twobody force object
+        # Get twobody force object
         tbcal = self.get_tbforce()
         tbcal.initialize(crd)
 
-        # gather the flux for each potential types.
-        key_to_aflux = {} # flux for atoms
-        key_to_gflux = {} # flux for group
+        # Gather the flux for each potential types.
+        key_to_aflux = {} # flux between atoms
+        key_to_gflux = {} # flux between groups
 
-        btypes = self.get_topology().get_decomp_list('bonded+')
-        for btype in btypes:
+        # ==============
+        # Calculate flux
+        # ==============
+        
+        # -----------------------------------------
+        # Calculate flux due to bonded interactions
+        # -----------------------------------------
+        bond_types = self.get_topology().get_decomp_list('bonded+')
+        for bond_type in bond_types:
             # check for the amount of improper torsion and torsion.
             # if btype in ['improper','torsion']: continue
             # bond type
-            flux_atm, flux_grp = self.cal_bonded(crd, vel, btype)
-            key_to_aflux[btype] = flux_atm
-            key_to_gflux[btype] = flux_grp
+            flux_atm, flux_grp = self.cal_bonded(crd, vel, bond_type)
+            # print("FluxCalculator.run")
+            # print(btype)
+            # print(flux_grp)
+            key_to_aflux[bond_type] = flux_atm
+            key_to_gflux[bond_type] = flux_grp
 
-        # non-bonded
+        # ---------------------------------------------
+        # Calculate flux due to non-bonded interactions
+        # ---------------------------------------------
         flux_atm, flux_grp = self.cal_coulomb(crd, vel)
         key_to_aflux['coulomb'] = flux_atm
         key_to_gflux['coulomb'] = flux_grp
+        
         flux_atm, flux_grp = self.cal_vdw(crd, vel)
         key_to_aflux['vdw'] = flux_atm
         key_to_gflux['vdw'] = flux_grp
+        
         # total for atom
         if flux_atm is not None:
             total_atm = numpy.zeros( key_to_aflux['vdw'].shape )
@@ -237,7 +251,7 @@ class FluxCalculator(CalculatorBase):
         if self.get_setting().output.output_energy:
             self.get_tbforce().output_energy()
         # write forces
-        if logger.is_debug():
+        if True:
             self.get_tbforce().output_force()
 
         return cstep, (key_to_aflux, key_to_gflux)
